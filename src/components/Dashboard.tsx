@@ -35,19 +35,21 @@ export const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
-        <Tabs defaultValue="accounts" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="w-full overflow-x-auto whitespace-nowrap flex sm:grid sm:grid-cols-5 gap-1 scrollbar-hide">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="accounts">Accounts</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
             <TabsTrigger value="payments">Recurring</TabsTrigger>
             <TabsTrigger value="debts">Debts</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="accounts" className="mt-6">
+          <TabsContent value="dashboard" className="mt-6">
             <WealthDashboard />
-            <div className="mt-8">
-              <AccountsSection />
-            </div>
+          </TabsContent>
+          
+          <TabsContent value="accounts" className="mt-6">
+            <AccountsSection />
           </TabsContent>
           
           <TabsContent value="transactions" className="mt-6">

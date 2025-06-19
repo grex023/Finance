@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import pkg from 'pg';
 import dotenv from 'dotenv';
+import fetch from 'node-fetch';
 
 dotenv.config();
 
@@ -574,6 +575,121 @@ app.put('/api/budgets/:id', async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Context-aware AI Q&A endpoint
+app.post('/api/ai-finance', async (req, res) => {
+  try {
+    console.log('AI Q&A request received:', req.body);
+    const { question, provider, openaiApiKey } = req.body;
+    if (!question || !provider) {
+      console.log('Missing question or provider');
+      return res.status(400).json({ error: 'Missing question or provider' });
+    }
+
+    // --- 1. Analyze question type ---
+    let contextData = '';
+    let prompt = '';
+    const now = new Date();
+    const year = now.getFullYear();
+
+    // --- 2. Fetch relevant data based on question ---
+    if (/interest/i.test(question)) {
+      // Fetch all interest transactions for this year
+      const tx = await pool.query(
+        'SELECT * FROM transactions WHERE LOWER(description) LIKE $1 AND date >= $2 AND date <= $3',
+        ['%interest%', `${year}-01-01`, `${year}-12-31`]
+      );
+      const totalInterest = tx.rows.reduce((sum, t) => sum + Number(t.amount), 0);
+      contextData = `Interest transactions for ${year}:\n` + tx.rows.map(t => `- £${t.amount} on ${t.date} (${t.description})`).join('\n') + `\nTotal interest: £${totalInterest.toFixed(2)}`;
+      prompt = `User question: "${question}"\n${contextData}`;
+    } else if (/amazon.*subscription|subscription.*amazon/i.test(question)) {
+      // Fetch recurring payments for Amazon
+      const subs = await pool.query(
+        "SELECT * FROM recurring_payments WHERE LOWER(name) LIKE '%amazon%' OR LOWER(description) LIKE '%amazon%' ORDER BY next_payment_date DESC LIMIT 1"
+      );
+      if (subs.rows.length > 0) {
+        const sub = subs.rows[0];
+        contextData = `Amazon subscription: £${sub.amount} due on ${sub.next_payment_date} (frequency: ${sub.frequency})`;
+      } else {
+        contextData = 'No Amazon subscription found.';
+      }
+      prompt = `User question: "${question}"\n${contextData}`;
+    } else {
+      // Fallback: provide recent transactions and recurring payments
+      const tx = await pool.query('SELECT * FROM transactions ORDER BY date DESC LIMIT 10');
+      const rec = await pool.query('SELECT * FROM recurring_payments ORDER BY next_payment_date DESC LIMIT 5');
+      contextData = `Recent transactions:\n` + tx.rows.map(t => `- £${t.amount} on ${t.date} (${t.description})`).join('\n') +
+        `\nRecent recurring payments:\n` + rec.rows.map(r => `- £${r.amount} for ${r.name} due on ${r.next_payment_date}`).join('\n');
+      prompt = `User question: "${question}"\n${contextData}`;
+    }
+
+    // --- 3. Send to AI provider ---
+    let aiResponse = '';
+    if (provider === 'ollama') {
+      // Send to local Ollama (assume Llama 3)
+      const ollamaRes = await fetch('http://host.docker.internal:11434/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama3:latest',
+          messages: [
+            { role: 'system', content: 'You are a helpful personal finance assistant. Answer based only on the data provided.' },
+            { role: 'user', content: prompt }
+          ]
+        })
+      });
+      // Node.js-compatible stream parser for Ollama
+      if (ollamaRes.body && ollamaRes.body.pipe) {
+        const readline = await import('readline');
+        const rl = readline.default.createInterface({ input: ollamaRes.body });
+        for await (const line of rl) {
+          if (!line.trim()) continue;
+          try {
+            const json = JSON.parse(line);
+            if (json.message && json.message.content) {
+              aiResponse += json.message.content;
+            }
+          } catch (e) { /* ignore parse errors for incomplete lines */ }
+        }
+      } else {
+        // Fallback: non-streaming
+        const ollamaData = await ollamaRes.json();
+        aiResponse = ollamaData.message?.content || ollamaData.response || 'No response from Ollama.';
+      }
+      res.json({ answer: aiResponse });
+      return;
+    } else if (provider === 'openai') {
+      // Send to OpenAI ChatGPT
+      if (!openaiApiKey) {
+        return res.status(400).json({ error: 'Missing OpenAI API key' });
+      }
+      const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openaiApiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            { role: 'system', content: 'You are a helpful personal finance assistant. Answer based only on the data provided.' },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 300
+        })
+      });
+      const openaiData = await openaiRes.json();
+      aiResponse = openaiData.choices?.[0]?.message?.content || 'No response from OpenAI.';
+    } else {
+      return res.status(400).json({ error: 'Unknown provider' });
+    }
+
+    res.json({ answer: aiResponse });
+  } catch (error) {
+    console.error('AI Q&A error:', error);
     res.status(500).json({ error: error.message });
   }
 });

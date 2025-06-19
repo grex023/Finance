@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Percent, CreditCard } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { useAccount } from '@/contexts/AccountContext';
+import FinanceChat from './FinanceChat';
 
 export const WealthDashboard = () => {
   const { accounts, debts, transactions, getTotalWealth, getTotalDebt, getNetWorth, getTotalRetirement, getTotalAvailableCredit } = useAccount();
@@ -94,42 +94,36 @@ export const WealthDashboard = () => {
     {
       title: "Total Wealth",
       value: totalWealth,
-      subtitle: "Excludes retirement accounts",
       icon: TrendingUp,
       colors: "border-green-200 bg-green-50 text-green-800 text-green-600 text-green-900"
     },
     {
       title: "Retirement",
       value: totalRetirement,
-      subtitle: "Long-term savings",
       icon: PiggyBank,
       colors: "border-blue-200 bg-blue-50 text-blue-800 text-blue-600 text-blue-900"
     },
     {
       title: "Available Credit",
       value: totalAvailableCredit,
-      subtitle: "Credit cards only",
       icon: CreditCard,
       colors: "border-orange-200 bg-orange-50 text-orange-800 text-orange-600 text-orange-900"
     },
     {
       title: "Savings Interest",
       value: savingsInterestForYear,
-      subtitle: "From interest transactions",
       icon: Percent,
       colors: "border-yellow-200 bg-yellow-50 text-yellow-800 text-yellow-600 text-yellow-900"
     },
     {
       title: "Total Debt",
       value: totalDebt,
-      subtitle: "",
       icon: TrendingDown,
       colors: "border-red-200 bg-red-50 text-red-800 text-red-600 text-red-900"
     },
     {
       title: "Net Worth",
       value: netWorth,
-      subtitle: "All assets minus debts",
       icon: DollarSign,
       colors: netWorth >= 0 
         ? "border-purple-200 bg-purple-50 text-purple-800 text-purple-600 text-purple-900"
@@ -138,7 +132,7 @@ export const WealthDashboard = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 relative pb-32">
       <div>
         <h3 className="text-2xl font-bold text-gray-900 mb-2">Wealth Dashboard</h3>
         <p className="text-gray-600">Overview of your financial position</p>
@@ -164,9 +158,6 @@ export const WealthDashboard = () => {
                     </CardHeader>
                     <CardContent>
                       <div className={`text-2xl font-bold ${colorClasses[4]}`}>£{card.value.toFixed(2)}</div>
-                      {card.subtitle && (
-                        <p className={`text-xs ${colorClasses[3]}`}>{card.subtitle}</p>
-                      )}
                     </CardContent>
                   </Card>
                 </CarouselItem>
@@ -178,65 +169,79 @@ export const WealthDashboard = () => {
         </Carousel>
       </div>
 
-      {/* Wealth Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg text-green-800">Liquid Wealth</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {Object.entries(wealthByType).map(([type, amount]) => (
-                <div key={type} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{getAccountTypeName(type)}</span>
-                  <span className="font-semibold text-green-600">£{amount.toFixed(2)}</span>
-                </div>
-              ))}
-              {Object.keys(wealthByType).length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">No liquid accounts yet</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg text-blue-800">Retirement Accounts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {retirementAccounts.map((account) => (
-                <div key={account.id} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{account.name}</span>
-                  <span className="font-semibold text-blue-600">£{account.balance.toFixed(2)}</span>
-                </div>
-              ))}
-              {retirementAccounts.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">No retirement accounts yet</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg text-red-800">Active Debts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {Object.entries(debtByType).map(([type, amount]) => (
-                <div key={type} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{getDebtTypeName(type)}</span>
-                  <span className="font-semibold text-red-600">£{amount.toFixed(2)}</span>
-                </div>
-              ))}
-              {Object.keys(debtByType).length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">No active debts</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Wealth Breakdown Carousel (3 overview cards) */}
+      <div className="w-full mt-6">
+        <Carousel opts={{ align: "start" }} className="w-full">
+          <CarouselContent className="-ml-1">
+            {/* Liquid Wealth Overview Card */}
+            <CarouselItem className="pl-1 basis-full sm:basis-1/2 lg:basis-1/3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg text-green-800">Liquid Wealth</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {Object.entries(wealthByType).map(([type, amount]) => (
+                      <div key={type} className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">{getAccountTypeName(type)}</span>
+                        <span className="font-semibold text-green-600">£{amount.toFixed(2)}</span>
+                      </div>
+                    ))}
+                    {Object.keys(wealthByType).length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">No liquid accounts yet</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+            {/* Retirement Accounts Overview Card */}
+            <CarouselItem className="pl-1 basis-full sm:basis-1/2 lg:basis-1/3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg text-blue-800">Retirement Accounts</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {retirementAccounts.map((account) => (
+                      <div key={account.id} className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">{account.name}</span>
+                        <span className="font-semibold text-blue-600">£{account.balance.toFixed(2)}</span>
+                      </div>
+                    ))}
+                    {retirementAccounts.length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">No retirement accounts yet</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+            {/* Active Debts Overview Card */}
+            <CarouselItem className="pl-1 basis-full sm:basis-1/2 lg:basis-1/3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg text-red-800">Active Debts</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {Object.entries(debtByType).map(([type, amount]) => (
+                      <div key={type} className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">{getDebtTypeName(type)}</span>
+                        <span className="font-semibold text-red-600">£{amount.toFixed(2)}</span>
+                      </div>
+                    ))}
+                    {Object.keys(debtByType).length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">No active debts</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
       </div>
+      <FinanceChat />
     </div>
   );
 };

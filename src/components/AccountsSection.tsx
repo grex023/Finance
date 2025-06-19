@@ -11,6 +11,7 @@ import { Account } from '@/contexts/AccountContext';
 import { toast } from '@/components/ui/use-toast';
 import { fetchTrading212Data } from '@/services/api';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 export const AccountsSection = () => {
   const { accounts, recurringPayments, addTransaction, deleteRecurringPayment, addRecurringPayment, updateAccount, refreshData } = useAccount();
@@ -250,20 +251,8 @@ export const AccountsSection = () => {
   // Sort accounts by order before rendering
   const sortedAccounts = [...accounts].sort((a, b) => a.order - b.order);
 
-  // Handle drag end
-  const onDragEnd = async (result: DropResult) => {
-    if (!result.destination) return;
-    const reordered = Array.from(sortedAccounts);
-    const [removed] = reordered.splice(result.source.index, 1);
-    reordered.splice(result.destination.index, 0, removed);
-    // Update order field for all accounts
-    for (let i = 0; i < reordered.length; i++) {
-      reordered[i].order = i;
-      await updateAccount(reordered[i].id, { ...reordered[i], order: i });
-    }
-    // Optionally, refresh data from backend
-    await refreshData();
-  };
+  // Only show banking accounts (current, savings, investment, retirement, crypto)
+  const bankingAccounts = sortedAccounts;
 
   return (
     <div className="space-y-6">
@@ -284,90 +273,74 @@ export const AccountsSection = () => {
         </div>
       </div>
 
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="accounts-droppable" direction="horizontal">
-          {(provided) => (
-            <div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-            >
-              {sortedAccounts.map((account, index) => (
-                <Draggable key={account.id} draggableId={account.id} index={index}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                    >
-                      <Card 
-                        className="hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-                        onClick={() => handleAccountClick(account)}
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <div className={`bg-gradient-to-r ${getAccountColor(account.type)} p-2 rounded-lg text-white`}>
-                              {getAccountIcon(account.type)}
-                            </div>
-                            <div className="text-right flex-1 ml-3">
-                              <CardTitle className="text-lg capitalize">{account.type}</CardTitle>
-                              <p className="text-sm text-gray-500">{account.name}</p>
-                            </div>
-                            <div className="flex gap-1">
-                              {account.type === 'investment' && account.apiKey && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRefreshInvestment(account);
-                                  }}
-                                  className="p-1 h-8 w-8"
-                                  title="Refresh balance from Trading 212"
-                                >
-                                  <RefreshCw className="h-4 w-4" />
-                                </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditAccount(account);
-                                }}
-                                className="p-1 h-8 w-8"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-600">Balance</span>
-                              <span className="text-lg font-semibold">£{account.balance.toFixed(2)}</span>
-                            </div>
-                            {account.type === 'current' && account.frequency && recurringPayments.length > 0 && (
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600">Projected Balance</span>
-                                <span className={`text-sm font-medium ${projectedBalances[account.id] || account.balance >= account.balance ? 'text-green-600' : 'text-red-600'}`}>
-                                  £{(projectedBalances[account.id] || account.balance).toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
+      {/* Swipeable Accounts Carousel */}
+      <Carousel opts={{ align: "start" }} className="w-full">
+        <CarouselContent className="-ml-1">
+          {bankingAccounts.map((account) => (
+            <CarouselItem key={account.id} className="pl-1 basis-full sm:basis-1/2 lg:basis-1/3">
+              <div onClick={() => handleAccountClick(account)} className="cursor-pointer">
+                <Card className="hover:shadow-lg transition-shadow duration-300">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className={`bg-gradient-to-r ${getAccountColor(account.type)} p-2 rounded-lg text-white`}>
+                        {getAccountIcon(account.type)}
+                      </div>
+                      <div className="text-right flex-1 ml-3">
+                        <CardTitle className="text-lg capitalize">{account.type}</CardTitle>
+                        <p className="text-sm text-gray-500">{account.name}</p>
+                      </div>
+                      <div className="flex gap-1">
+                        {account.type === 'investment' && account.apiKey && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRefreshInvestment(account);
+                            }}
+                            className="p-1 h-8 w-8"
+                            title="Refresh balance from Trading 212"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditAccount(account);
+                          }}
+                          className="p-1 h-8 w-8"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Balance</span>
+                        <span className="text-lg font-semibold">£{account.balance.toFixed(2)}</span>
+                      </div>
+                      {account.type === 'current' && account.frequency && recurringPayments.length > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Projected Balance</span>
+                          <span className={`text-sm font-medium ${projectedBalances[account.id] || account.balance >= account.balance ? 'text-green-600' : 'text-red-600'}`}>£{(projectedBalances[account.id] || account.balance).toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious />
+        <CarouselNext />
+      </Carousel>
+
       <AddAccountDialog open={showAddAccount} onOpenChange={setShowAddAccount} />
       <EditAccountDialog 
         open={showEditAccount} 
