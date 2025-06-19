@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Calendar, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -74,6 +73,9 @@ export const RecurringPaymentsSection = () => {
                 <Badge className={getFrequencyColor(payment.frequency)}>
                   {payment.frequency}
                 </Badge>
+              </div>
+              <div className="mt-1">
+                <span className={`text-xs font-semibold rounded px-2 py-1 ${payment.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{payment.type === 'income' ? 'Income' : 'Expense'}</span>
               </div>
               <p className="text-sm text-gray-600">{payment.category}</p>
             </CardHeader>

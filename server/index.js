@@ -622,7 +622,7 @@ app.post('/api/ai-finance', async (req, res) => {
       const tx = await pool.query('SELECT * FROM transactions ORDER BY date DESC LIMIT 10');
       const rec = await pool.query('SELECT * FROM recurring_payments ORDER BY next_payment_date DESC LIMIT 5');
       contextData = `Recent transactions:\n` + tx.rows.map(t => `- £${t.amount} on ${t.date} (${t.description})`).join('\n') +
-        `\nRecent recurring payments:\n` + rec.rows.map(r => `- £${r.amount} for ${r.name} due on ${r.next_payment_date}`).join('\n');
+        `\nThe following recurring payments are labeled as either Income (money in) or Expense (money out).\n` + rec.rows.map(r => `- £${r.amount} (${r.type === 'income' ? 'Income' : 'Expense'}) for ${r.name} due on ${r.next_payment_date}`).join('\n');
       prompt = `User question: "${question}"\n${contextData}`;
     }
 
@@ -636,7 +636,7 @@ app.post('/api/ai-finance', async (req, res) => {
         body: JSON.stringify({
           model: 'llama3:latest',
           messages: [
-            { role: 'system', content: 'You are a helpful personal finance assistant. Answer based only on the data provided.' },
+            { role: 'system', content: 'You are a helpful personal finance assistant. Answer based only on the data provided. Do not infer whether a payment is income or expense from its name; always use the provided type (Income or Expense).' },
             { role: 'user', content: prompt }
           ]
         })
@@ -675,7 +675,7 @@ app.post('/api/ai-finance', async (req, res) => {
         body: JSON.stringify({
           model: 'gpt-3.5-turbo',
           messages: [
-            { role: 'system', content: 'You are a helpful personal finance assistant. Answer based only on the data provided.' },
+            { role: 'system', content: 'You are a helpful personal finance assistant. Answer based only on the data provided. Do not infer whether a payment is income or expense from its name; always use the provided type (Income or Expense).' },
             { role: 'user', content: prompt }
           ],
           max_tokens: 300
