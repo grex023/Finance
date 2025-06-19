@@ -1,0 +1,242 @@
+
+import React from 'react';
+import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Percent, CreditCard } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { useAccount } from '@/contexts/AccountContext';
+
+export const WealthDashboard = () => {
+  const { accounts, debts, transactions, getTotalWealth, getTotalDebt, getNetWorth, getTotalRetirement, getTotalAvailableCredit } = useAccount();
+
+  const totalWealth = getTotalWealth();
+  const totalRetirement = getTotalRetirement();
+  const totalDebt = getTotalDebt();
+  const netWorth = getNetWorth();
+  const totalAvailableCredit = getTotalAvailableCredit();
+
+  // Calculate savings interest from actual interest transactions only
+  const getSavingsInterestFromTransactions = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    // Financial year runs from April to March
+    let financialYearStart: Date;
+    if (currentMonth >= 3) { // April onwards (months 3-11)
+      financialYearStart = new Date(currentYear, 3, 1); // April 1st current year
+    } else { // January to March (months 0-2)
+      financialYearStart = new Date(currentYear - 1, 3, 1); // April 1st previous year
+    }
+    
+    // Filter transactions for interest payments within the financial year
+    const interestTransactions = transactions.filter(transaction => {
+      const transactionDate = new Date(transaction.date);
+      return (
+        transaction.category.toLowerCase().includes('interest') &&
+        transaction.type === 'income' &&
+        transactionDate >= financialYearStart &&
+        transactionDate <= now
+      );
+    });
+    
+    return interestTransactions.reduce((total, transaction) => total + transaction.amount, 0);
+  };
+
+  const savingsInterestForYear = getSavingsInterestFromTransactions();
+
+  const wealthByType = accounts
+    .filter(account => account.type !== 'retirement')
+    .reduce((acc, account) => {
+      acc[account.type] = (acc[account.type] || 0) + account.balance;
+      return acc;
+    }, {} as Record<string, number>);
+
+  const retirementAccounts = accounts.filter(account => account.type === 'retirement');
+
+  const debtByType = debts
+    .filter(debt => debt.balance > 0)
+    .reduce((acc, debt) => {
+      acc[debt.type] = (acc[debt.type] || 0) + debt.balance;
+      return acc;
+    }, {} as Record<string, number>);
+
+  const getAccountTypeName = (type: string) => {
+    switch (type) {
+      case 'current':
+        return 'Current Accounts';
+      case 'savings':
+        return 'Savings Accounts';
+      case 'investment':
+        return 'Investment Accounts';
+      case 'crypto':
+        return 'Crypto Accounts';
+      default:
+        return type;
+    }
+  };
+
+  const getDebtTypeName = (type: string) => {
+    switch (type) {
+      case 'credit_card':
+        return 'Credit Cards';
+      case 'loan':
+        return 'Loans';
+      case 'car_payment':
+        return 'Car Payments';
+      case 'mortgage':
+        return 'Mortgages';
+      default:
+        return type;
+    }
+  };
+
+  const summaryCards = [
+    {
+      title: "Total Wealth",
+      value: totalWealth,
+      subtitle: "Excludes retirement accounts",
+      icon: TrendingUp,
+      colors: "border-green-200 bg-green-50 text-green-800 text-green-600 text-green-900"
+    },
+    {
+      title: "Retirement",
+      value: totalRetirement,
+      subtitle: "Long-term savings",
+      icon: PiggyBank,
+      colors: "border-blue-200 bg-blue-50 text-blue-800 text-blue-600 text-blue-900"
+    },
+    {
+      title: "Available Credit",
+      value: totalAvailableCredit,
+      subtitle: "Credit cards only",
+      icon: CreditCard,
+      colors: "border-orange-200 bg-orange-50 text-orange-800 text-orange-600 text-orange-900"
+    },
+    {
+      title: "Savings Interest",
+      value: savingsInterestForYear,
+      subtitle: "From interest transactions",
+      icon: Percent,
+      colors: "border-yellow-200 bg-yellow-50 text-yellow-800 text-yellow-600 text-yellow-900"
+    },
+    {
+      title: "Total Debt",
+      value: totalDebt,
+      subtitle: "",
+      icon: TrendingDown,
+      colors: "border-red-200 bg-red-50 text-red-800 text-red-600 text-red-900"
+    },
+    {
+      title: "Net Worth",
+      value: netWorth,
+      subtitle: "All assets minus debts",
+      icon: DollarSign,
+      colors: netWorth >= 0 
+        ? "border-purple-200 bg-purple-50 text-purple-800 text-purple-600 text-purple-900"
+        : "border-orange-200 bg-orange-50 text-orange-800 text-orange-600 text-orange-900"
+    }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">Wealth Dashboard</h3>
+        <p className="text-gray-600">Overview of your financial position</p>
+      </div>
+
+      {/* Summary Cards Carousel */}
+      <div className="relative">
+        <Carousel
+          opts={{
+            align: "start",
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-1">
+            {summaryCards.map((card, index) => {
+              const colorClasses = card.colors.split(' ');
+              return (
+                <CarouselItem key={index} className="pl-1 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 2xl:basis-1/6">
+                  <Card className={`${colorClasses[0]} ${colorClasses[1]} border-2`}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className={`text-sm font-medium ${colorClasses[2]}`}>{card.title}</CardTitle>
+                      <card.icon className={`h-4 w-4 ${colorClasses[3]}`} />
+                    </CardHeader>
+                    <CardContent>
+                      <div className={`text-2xl font-bold ${colorClasses[4]}`}>£{card.value.toFixed(2)}</div>
+                      {card.subtitle && (
+                        <p className={`text-xs ${colorClasses[3]}`}>{card.subtitle}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </CarouselItem>
+              );
+            })}
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
+      </div>
+
+      {/* Wealth Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg text-green-800">Liquid Wealth</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {Object.entries(wealthByType).map(([type, amount]) => (
+                <div key={type} className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">{getAccountTypeName(type)}</span>
+                  <span className="font-semibold text-green-600">£{amount.toFixed(2)}</span>
+                </div>
+              ))}
+              {Object.keys(wealthByType).length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No liquid accounts yet</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg text-blue-800">Retirement Accounts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {retirementAccounts.map((account) => (
+                <div key={account.id} className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">{account.name}</span>
+                  <span className="font-semibold text-blue-600">£{account.balance.toFixed(2)}</span>
+                </div>
+              ))}
+              {retirementAccounts.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No retirement accounts yet</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg text-red-800">Active Debts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {Object.entries(debtByType).map(([type, amount]) => (
+                <div key={type} className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">{getDebtTypeName(type)}</span>
+                  <span className="font-semibold text-red-600">£{amount.toFixed(2)}</span>
+                </div>
+              ))}
+              {Object.keys(debtByType).length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No active debts</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
