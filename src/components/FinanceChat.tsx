@@ -18,7 +18,7 @@ export default function FinanceChat() {
     setMessages((msgs) => [...msgs, { role: 'user', content: input }]);
     setLoading(true);
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const baseUrl = 'http://192.168.3.10:5001/api';
       const res = await fetch(`${baseUrl}/ai-finance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -6,7 +6,8 @@ export const mockAccounts = [
     balance: 2500.00,
     frequency: 'monthly',
     reset_day: 1,
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    order: 0
   },
   {
     id: 'mock-2', 
@@ -14,7 +15,8 @@ export const mockAccounts = [
     type: 'savings',
     balance: 15000.00,
     interest_rate: 4.5,
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    order: 1
   },
   {
     id: 'mock-3',
@@ -22,7 +24,8 @@ export const mockAccounts = [
     type: 'investment',
     balance: 8500.00,
     trading_result: 350.75,
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    order: 2
   }
 ];
 
