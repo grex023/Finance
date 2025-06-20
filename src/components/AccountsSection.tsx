@@ -12,6 +12,7 @@ import { toast } from '@/components/ui/use-toast';
 import { fetchTrading212Data } from '@/services/api';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { useIsMobile } from '../hooks/use-mobile';
 
 export const AccountsSection = () => {
   const { accounts, recurringPayments, addTransaction, deleteRecurringPayment, addRecurringPayment, updateAccount, refreshData } = useAccount();
@@ -22,6 +23,7 @@ export const AccountsSection = () => {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [showTransfer, setShowTransfer] = useState(false);
   const [projectedBalances, setProjectedBalances] = useState<Record<string, number>>({});
+  const isMobile = useIsMobile();
 
   // Calculate projected balances for all accounts
   useEffect(() => {
@@ -273,85 +275,122 @@ export const AccountsSection = () => {
         </div>
       </div>
 
-      {/* Swipeable Accounts Carousel */}
-      <Carousel opts={{ align: "start" }} className="w-full">
-        <CarouselContent className="-ml-1">
-          {bankingAccounts.map((account) => (
-            <CarouselItem key={account.id} className="pl-1 basis-full sm:basis-1/2 lg:basis-1/3">
-              <div onClick={() => handleAccountClick(account)} className="cursor-pointer">
-                <Card className="hover:shadow-lg transition-shadow duration-300">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className={`bg-gradient-to-r ${getAccountColor(account.type)} p-2 rounded-lg text-white`}>
-                        {getAccountIcon(account.type)}
-                      </div>
-                      <div className="text-right flex-1 ml-3">
-                        <CardTitle className="text-lg capitalize">{account.type}</CardTitle>
-                        <p className="text-sm text-gray-500">{account.name}</p>
-                      </div>
-                      <div className="flex gap-1">
-                        {account.type === 'investment' && account.apiKey && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRefreshInvestment(account);
-                            }}
-                            className="p-1 h-8 w-8"
-                            title="Refresh balance from Trading 212"
-                          >
-                            <RefreshCw className="h-4 w-4" />
-                          </Button>
-                        )}
+      {/* Responsive: Carousel on mobile, grid on desktop */}
+      {isMobile ? (
+        <div className="flex overflow-x-auto gap-4 pb-2">
+          {bankingAccounts.map(account => (
+            <div key={account.id} className="min-w-[260px] max-w-xs flex-shrink-0" onClick={() => handleAccountClick(account)}>
+              <Card className="hover:shadow-lg transition-shadow duration-300 cursor-pointer">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className={`bg-gradient-to-r ${getAccountColor(account.type)} p-2 rounded-lg text-white`}>
+                      {getAccountIcon(account.type)}
+                    </div>
+                    <div className="text-right flex-1 ml-3">
+                      <CardTitle className="text-lg capitalize">{account.type}</CardTitle>
+                      <p className="text-sm text-gray-500">{account.name}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      {account.type === 'investment' && account.apiKey && (
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditAccount(account);
-                          }}
+                          onClick={e => { e.stopPropagation(); handleRefreshInvestment(account); }}
                           className="p-1 h-8 w-8"
+                          title="Refresh balance from Trading 212"
                         >
-                          <Edit className="h-4 w-4" />
+                          <RefreshCw className="h-4 w-4" />
                         </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Balance</span>
-                        <span className="text-lg font-semibold">£{account.balance.toFixed(2)}</span>
-                      </div>
-                      {account.type === 'current' && account.frequency && recurringPayments.length > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Projected Balance</span>
-                          <span className={`text-sm font-medium ${projectedBalances[account.id] || account.balance >= account.balance ? 'text-green-600' : 'text-red-600'}`}>£{(projectedBalances[account.id] || account.balance).toFixed(2)}</span>
-                        </div>
                       )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={e => { e.stopPropagation(); handleEditAccount(account); }}
+                        className="p-1 h-8 w-8"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </CarouselItem>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Balance</span>
+                      <span className="text-lg font-semibold">£{account.balance.toFixed(2)}</span>
+                    </div>
+                    {account.type === 'current' && account.frequency && recurringPayments.length > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Projected Balance</span>
+                        <span className={`text-sm font-medium ${(projectedBalances[account.id] || account.balance) >= account.balance ? 'text-green-600' : 'text-red-600'}`}>£{(projectedBalances[account.id] || account.balance).toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           ))}
-        </CarouselContent>
-        <CarouselPrevious />
-        <CarouselNext />
-      </Carousel>
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-4">
+          {bankingAccounts.map(account => (
+            <div key={account.id} onClick={() => handleAccountClick(account)}>
+              <Card className="hover:shadow-lg transition-shadow duration-300 cursor-pointer">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className={`bg-gradient-to-r ${getAccountColor(account.type)} p-2 rounded-lg text-white`}>
+                      {getAccountIcon(account.type)}
+                    </div>
+                    <div className="text-right flex-1 ml-3">
+                      <CardTitle className="text-lg capitalize">{account.type}</CardTitle>
+                      <p className="text-sm text-gray-500">{account.name}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      {account.type === 'investment' && account.apiKey && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={e => { e.stopPropagation(); handleRefreshInvestment(account); }}
+                          className="p-1 h-8 w-8"
+                          title="Refresh balance from Trading 212"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={e => { e.stopPropagation(); handleEditAccount(account); }}
+                        className="p-1 h-8 w-8"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Balance</span>
+                      <span className="text-lg font-semibold">£{account.balance.toFixed(2)}</span>
+                    </div>
+                    {account.type === 'current' && account.frequency && recurringPayments.length > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Projected Balance</span>
+                        <span className={`text-sm font-medium ${(projectedBalances[account.id] || account.balance) >= account.balance ? 'text-green-600' : 'text-red-600'}`}>£{(projectedBalances[account.id] || account.balance).toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ))}
+        </div>
+      )}
 
       <AddAccountDialog open={showAddAccount} onOpenChange={setShowAddAccount} />
-      <EditAccountDialog 
-        open={showEditAccount} 
-        onOpenChange={setShowEditAccount}
-        account={editingAccount}
-      />
-      <AccountDetailDialog
-        open={showAccountDetail}
-        onOpenChange={setShowAccountDetail}
-        account={selectedAccount}
-      />
+      <EditAccountDialog open={showEditAccount} onOpenChange={setShowEditAccount} account={editingAccount} />
+      <AccountDetailDialog open={showAccountDetail} onOpenChange={setShowAccountDetail} account={selectedAccount} />
       <TransferDialog open={showTransfer} onOpenChange={setShowTransfer} />
     </div>
   );

@@ -48,11 +48,11 @@ export default function FinanceChat() {
       </div>
       <div className="flex gap-2 items-center">
         <select
-          className="border rounded px-2 py-1 text-sm"
+          className="border rounded px-2 py-1 mr-2"
           value={provider}
           onChange={e => setProvider(e.target.value)}
         >
-          {PROVIDERS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+          <option value="ollama">Ollama (Llama 3)</option>
         </select>
         {provider === 'openai' && (
           <input
