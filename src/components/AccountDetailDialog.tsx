@@ -146,6 +146,15 @@ export const AccountDetailDialog = ({ open, onOpenChange, account }: AccountDeta
             <span className="capitalize">{account.type} Account</span>
             <span className="text-gray-500">•</span>
             <span>{account.name}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDeleteAccount}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 ml-4"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
             <div className="ml-auto flex gap-2">
               {isTrading212Account && (
                 <Button
@@ -157,15 +166,6 @@ export const AccountDetailDialog = ({ open, onOpenChange, account }: AccountDeta
                   Refresh
                 </Button>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDeleteAccount}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
             </div>
           </DialogTitle>
         </DialogHeader>
