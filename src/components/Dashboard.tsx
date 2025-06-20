@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useAccount } from '@/contexts/AccountContext';
 import { WealthDashboard } from './WealthDashboard';
 import { AccountsSection } from './AccountsSection';
@@ -11,6 +11,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export const Dashboard = () => {
   const { loading, error, retryConnection } = useAccount();
+  const tabListRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = React.useState('dashboard');
+
+  useEffect(() => {
+    // Scroll the active tab into view on mount and when activeTab changes
+    const tabList = tabListRef.current;
+    if (tabList) {
+      const active = tabList.querySelector('[data-state="active"]');
+      if (active && active.scrollIntoView) {
+        active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+  }, [activeTab]);
 
   if (loading) {
     return (
@@ -35,8 +48,8 @@ export const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
-        <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="w-full overflow-x-auto whitespace-nowrap flex sm:grid sm:grid-cols-5 gap-1 scrollbar-hide">
+        <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="dashboard" className="w-full">
+          <TabsList ref={tabListRef} className="w-full overflow-x-auto whitespace-nowrap flex sm:grid sm:grid-cols-5 gap-1 scrollbar-hide px-2">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="accounts">Accounts</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
