@@ -235,36 +235,6 @@ export const WealthDashboard = () => {
         </Carousel>
       </div>
 
-      {/* Add Upcoming Payments section below summary cards and above breakdown */}
-      <div className="mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg text-orange-800">Upcoming Payments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {upcomingPayments.length > 0 ? (
-              upcomingPayments.map(payment => (
-                <div key={payment.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
-                  <div className="flex justify-between items-center mb-1">
-                    <div>
-                      <p className="font-medium">{payment.name} <span className={`ml-2 text-xs font-semibold rounded px-2 py-1 ${payment.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{payment.type === 'income' ? 'Income' : 'Expense'}</span></p>
-                      <p className="text-xs text-gray-600">Due: {new Date(payment.nextPaymentDate).toLocaleDateString()} | Account: {getAccountName(payment.accountId)}</p>
-                    </div>
-                    <span className="text-orange-600 font-semibold">£{payment.amount.toFixed(2)}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex-1" onClick={() => handlePaymentPaid(payment)}>✓ Paid</Button>
-                    <Button size="sm" variant="outline" className="flex-1" onClick={() => handlePaymentSkipped(payment)}>✗ Skip</Button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-gray-400 italic text-sm">No upcoming payments in the next 7 days.</div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Wealth Breakdown Carousel (3 overview cards) */}
       <div className="w-full mt-6">
         <Carousel opts={{ align: "start" }} className="w-full">
@@ -336,6 +306,38 @@ export const WealthDashboard = () => {
           <CarouselPrevious />
           <CarouselNext />
         </Carousel>
+      </div>
+
+      {/* Upcoming Payments card below breakdown, 1/3 width on desktop, full width on mobile */}
+      <div className="w-full flex justify-center mt-6">
+        <div className="w-full sm:w-2/3 lg:w-1/3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg text-orange-800">Upcoming Payments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {upcomingPayments.length > 0 ? (
+                upcomingPayments.map(payment => (
+                  <div key={payment.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
+                    <div className="flex justify-between items-center mb-1">
+                      <div>
+                        <p className="font-medium">{payment.name} <span className={`ml-2 text-xs font-semibold rounded px-2 py-1 ${payment.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{payment.type === 'income' ? 'Income' : 'Expense'}</span></p>
+                        <p className="text-xs text-gray-600">Due: {new Date(payment.nextPaymentDate).toLocaleDateString()} | Account: {getAccountName(payment.accountId)}</p>
+                      </div>
+                      <span className="text-orange-600 font-semibold">£{payment.amount.toFixed(2)}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex-1" onClick={() => handlePaymentPaid(payment)}>✓ Paid</Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handlePaymentSkipped(payment)}>✗ Skip</Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-400 italic text-sm">No upcoming payments in the next 7 days.</div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
       <FinanceChat />
     </div>
