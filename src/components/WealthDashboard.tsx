@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { useAccount } from '@/contexts/AccountContext';
 import FinanceChat from './FinanceChat';
+import { Button } from '@/components/ui/button';
 
 export const WealthDashboard = () => {
-  const { accounts, debts, transactions, getTotalWealth, getTotalDebt, getNetWorth, getTotalRetirement, getTotalAvailableCredit } = useAccount();
+  const { accounts, debts, transactions, recurringPayments, addTransaction, deleteRecurringPayment, addRecurringPayment, getTotalWealth, getTotalRetirement, getTotalDebt, getNetWorth, getTotalAvailableCredit } = useAccount();
 
   const totalWealth = getTotalWealth();
   const totalRetirement = getTotalRetirement();
@@ -131,6 +132,71 @@ export const WealthDashboard = () => {
     }
   ];
 
+  // Helper to get account name by ID
+  const getAccountName = (accountId: string) => {
+    const account = accounts.find(acc => acc.id === accountId);
+    return account ? account.name : 'Unknown Account';
+  };
+
+  // Helper to get next payment date
+  const getNextPaymentDate = (frequency, currentDate) => {
+    const nextDate = new Date(currentDate);
+    switch (frequency) {
+      case 'weekly':
+        nextDate.setDate(nextDate.getDate() + 7);
+        break;
+      case 'monthly':
+        nextDate.setMonth(nextDate.getMonth() + 1);
+        break;
+      case 'yearly':
+        nextDate.setFullYear(nextDate.getFullYear() + 1);
+        break;
+    }
+    return nextDate;
+  };
+
+  // Payment handlers
+  const handlePaymentPaid = (payment) => {
+    addTransaction({
+      accountId: payment.accountId,
+      amount: payment.amount,
+      description: payment.name,
+      category: payment.category,
+      date: new Date(),
+      type: payment.type,
+    });
+    deleteRecurringPayment(payment.id);
+    const nextPaymentDate = getNextPaymentDate(payment.frequency, payment.nextPaymentDate);
+    addRecurringPayment({
+      name: payment.name,
+      amount: payment.amount,
+      frequency: payment.frequency,
+      category: payment.category,
+      type: payment.type,
+      nextPaymentDate,
+      accountId: payment.accountId,
+    });
+  };
+  const handlePaymentSkipped = (payment) => {
+    deleteRecurringPayment(payment.id);
+    const nextPaymentDate = getNextPaymentDate(payment.frequency, payment.nextPaymentDate);
+    addRecurringPayment({
+      name: payment.name,
+      amount: payment.amount,
+      frequency: payment.frequency,
+      category: payment.category,
+      type: payment.type,
+      nextPaymentDate,
+      accountId: payment.accountId,
+    });
+  };
+
+  // Get upcoming payments (next 7 days)
+  const today = new Date();
+  const weekFromNow = new Date();
+  weekFromNow.setDate(today.getDate() + 7);
+  const upcomingPayments = recurringPayments.filter(payment => new Date(payment.nextPaymentDate) <= weekFromNow);
+
   return (
     <div className="space-y-8 relative pb-32">
       <div>
@@ -167,6 +233,36 @@ export const WealthDashboard = () => {
           <CarouselPrevious />
           <CarouselNext />
         </Carousel>
+      </div>
+
+      {/* Add Upcoming Payments section below summary cards and above breakdown */}
+      <div className="mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg text-orange-800">Upcoming Payments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {upcomingPayments.length > 0 ? (
+              upcomingPayments.map(payment => (
+                <div key={payment.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <div>
+                      <p className="font-medium">{payment.name} <span className={`ml-2 text-xs font-semibold rounded px-2 py-1 ${payment.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{payment.type === 'income' ? 'Income' : 'Expense'}</span></p>
+                      <p className="text-xs text-gray-600">Due: {new Date(payment.nextPaymentDate).toLocaleDateString()} | Account: {getAccountName(payment.accountId)}</p>
+                    </div>
+                    <span className="text-orange-600 font-semibold">£{payment.amount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex-1" onClick={() => handlePaymentPaid(payment)}>✓ Paid</Button>
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => handlePaymentSkipped(payment)}>✗ Skip</Button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-gray-400 italic text-sm">No upcoming payments in the next 7 days.</div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Wealth Breakdown Carousel (3 overview cards) */}
