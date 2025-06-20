@@ -662,16 +662,25 @@ app.post('/api/ai-finance', async (req, res) => {
       res.json({ answer: aiResponse });
       return;
     } else if (provider === 'openai') {
+      console.log('--- OpenAI Request ---');
+      console.log('Received request for OpenAI');
       // Send to OpenAI ChatGPT
       if (!openaiApiKey) {
+        console.log('Error: Missing OpenAI API key');
         return res.status(400).json({ error: 'Missing OpenAI API key' });
       }
+      console.log('OpenAI API Key provided (hidden for security)');
+      console.log('Prompt:', prompt);
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`
+      };
+      console.log('Request Headers:', { 'Content-Type': headers['Content-Type'], 'Authorization': 'Bearer [REDACTED]' });
+
       const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiApiKey}`
-        },
+        headers: headers,
         body: JSON.stringify({
           model: 'gpt-3.5-turbo',
           messages: [
