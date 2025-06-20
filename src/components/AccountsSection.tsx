@@ -328,10 +328,10 @@ export const AccountsSection = () => {
                   </div>
                 </CardContent>
                 {/* Upcoming Payments for this account */}
-                <div className="mt-2">
-                  <h4 className="text-md font-semibold mb-1">Upcoming Payments</h4>
-                  {recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).length > 0 ? (
-                    recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).map(payment => (
+                {recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).length > 0 && (
+                  <div className="mt-2">
+                    <h4 className="text-md font-semibold mb-1 pl-2">Upcoming Payments</h4>
+                    {recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).map(payment => (
                       <div key={payment.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-2">
                         <div className="flex justify-between items-center mb-1">
                           <div>
@@ -345,11 +345,9 @@ export const AccountsSection = () => {
                           <Button size="sm" variant="outline" className="flex-1" onClick={e => { e.stopPropagation(); handlePaymentSkipped(payment); }}>✗ Skip</Button>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-gray-400 italic text-sm">No upcoming payments in the next 7 days.</div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </Card>
             </div>
           ))}
@@ -406,10 +404,10 @@ export const AccountsSection = () => {
                   </div>
                 </CardContent>
                 {/* Upcoming Payments for this account */}
-                <div className="mt-2">
-                  <h4 className="text-md font-semibold mb-1">Upcoming Payments</h4>
-                  {recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).length > 0 ? (
-                    recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).map(payment => (
+                {recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).length > 0 && (
+                  <div className="mt-2">
+                    <h4 className="text-md font-semibold mb-1 pl-2">Upcoming Payments</h4>
+                    {recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).map(payment => (
                       <div key={payment.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-2">
                         <div className="flex justify-between items-center mb-1">
                           <div>
@@ -423,11 +421,9 @@ export const AccountsSection = () => {
                           <Button size="sm" variant="outline" className="flex-1" onClick={e => { e.stopPropagation(); handlePaymentSkipped(payment); }}>✗ Skip</Button>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-gray-400 italic text-sm">No upcoming payments in the next 7 days.</div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </Card>
             </div>
           ))}
