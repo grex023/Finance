@@ -17,7 +17,7 @@ interface AccountDetailDialogProps {
 }
 
 export const AccountDetailDialog = ({ open, onOpenChange, account }: AccountDetailDialogProps) => {
-  const { transactions, recurringPayments, updateAccount, deleteAccount, refreshData } = useAccount();
+  const { transactions, recurringPayments, updateAccount, deleteAccount, refreshData, addTransaction, deleteRecurringPayment, addRecurringPayment } = useAccount();
   const { toast } = useToast();
   const projectedBalance = useProjectedBalance(account);
 
@@ -29,14 +29,38 @@ export const AccountDetailDialog = ({ open, onOpenChange, account }: AccountDeta
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
 
-  // Get recurring payments for the next week
+  // Get recurring payments for the next week for this account
   const nextWeek = new Date();
   nextWeek.setDate(nextWeek.getDate() + 7);
-  
-  const upcomingRecurringPayments = recurringPayments.filter(payment => {
-    const paymentDate = new Date(payment.nextPaymentDate);
-    return payment.accountId === account.id && paymentDate <= nextWeek;
-  });
+  const upcomingRecurringPayments = recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= nextWeek);
+
+  // Add Pay/Skip handlers (re-implement if not available as props)
+  const handlePaymentPaid = (payment) => {
+    addTransaction({
+      accountId: payment.accountId,
+      amount: payment.amount,
+      description: payment.name,
+      category: payment.category,
+      date: new Date(),
+      type: 'expense',
+    });
+    deleteRecurringPayment(payment.id);
+    // Create the next payment
+    const nextPaymentDate = new Date(payment.nextPaymentDate);
+    if (payment.frequency === 'weekly') nextPaymentDate.setDate(nextPaymentDate.getDate() + 7);
+    if (payment.frequency === 'monthly') nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+    if (payment.frequency === 'yearly') nextPaymentDate.setFullYear(nextPaymentDate.getFullYear() + 1);
+    addRecurringPayment({ ...payment, nextPaymentDate });
+  };
+  const handlePaymentSkipped = (payment) => {
+    deleteRecurringPayment(payment.id);
+    // Create the next payment
+    const nextPaymentDate = new Date(payment.nextPaymentDate);
+    if (payment.frequency === 'weekly') nextPaymentDate.setDate(nextPaymentDate.getDate() + 7);
+    if (payment.frequency === 'monthly') nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+    if (payment.frequency === 'yearly') nextPaymentDate.setFullYear(nextPaymentDate.getFullYear() + 1);
+    addRecurringPayment({ ...payment, nextPaymentDate });
+  };
 
   const getTransactionTypeColor = (type: string) => {
     switch (type) {
@@ -269,6 +293,10 @@ export const AccountDetailDialog = ({ open, onOpenChange, account }: AccountDeta
                           £{payment.amount.toFixed(2)}
                         </p>
                         <p className="text-xs text-gray-500 capitalize">{payment.frequency}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex-1" onClick={() => handlePaymentPaid(payment)}>✓ Paid</Button>
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => handlePaymentSkipped(payment)}>✗ Skip</Button>
+                        </div>
                       </div>
                     </div>
                   ))}
