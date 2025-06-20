@@ -148,6 +148,36 @@ curl http://localhost:5001/api/health
 docker exec budgetmaster-db pg_isready -U budgetuser
 ```
 
+## Deployment
+
+When deploying the application to a server on your local network, you must hardcode the server's IP address in the frontend code so that it can communicate with the backend API.
+
+Follow these steps to configure the IP address:
+
+1.  **Open the main API configuration file**:
+    *   `src/services/api.ts`
+
+2.  **Update the `API_BASE_URL`**:
+    *   Change `http://192.168.3.10:5001/api` to your server's IP address and port.
+    *   ```typescript
+        const API_BASE_URL = 'http://YOUR_SERVER_IP:5001/api';
+        ```
+
+3.  **Open the AI Chat component file**:
+    *   `src/components/FinanceChat.tsx`
+
+4.  **Update the `baseUrl`**:
+    *   Inside the `sendMessage` function, change `http://192.168.3.10:5001/api` to your server's IP address.
+    *   ```typescript
+        const baseUrl = 'http://YOUR_SERVER_IP:5001/api';
+        ```
+
+5.  **Rebuild the application**:
+    *   After making these changes, you must rebuild the Docker containers to apply them:
+    *   ```bash
+        docker-compose down && docker-compose build --no-cache && docker-compose up -d
+        ```
+
 ## Development Setup
 
 ### Local Development

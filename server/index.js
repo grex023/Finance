@@ -681,13 +681,19 @@ app.post('/api/ai-finance', async (req, res) => {
           max_tokens: 300
         })
       });
+
+      if (!openaiRes.ok) {
+        const errorText = await openaiRes.text();
+        console.error('OpenAI API Error:', openaiRes.status, errorText);
+        return res.status(502).json({ error: 'Failed to fetch from OpenAI', details: errorText });
+      }
+
       const openaiData = await openaiRes.json();
       aiResponse = openaiData.choices?.[0]?.message?.content || 'No response from OpenAI.';
+      return res.json({ answer: aiResponse });
     } else {
       return res.status(400).json({ error: 'Unknown provider' });
     }
-
-    res.json({ answer: aiResponse });
   } catch (error) {
     console.error('AI Q&A error:', error);
     res.status(500).json({ error: error.message });
