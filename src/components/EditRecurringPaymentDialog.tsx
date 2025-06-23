@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -51,7 +50,7 @@ export const EditRecurringPaymentDialog = ({ open, onOpenChange, payment }: Edit
     }
   }, [payment]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!payment || !formData.name || !formData.amount || !formData.category || !formData.nextPaymentDate || !formData.accountId) {
@@ -72,14 +71,21 @@ export const EditRecurringPaymentDialog = ({ open, onOpenChange, payment }: Edit
       nextPaymentDate: new Date(formData.nextPaymentDate),
       accountId: formData.accountId,
     };
-
-    updateRecurringPayment(payment.id, updatedData);
-    toast({
-      title: "Success",
-      description: `Recurring ${formData.type} updated successfully!`,
-    });
-
-    onOpenChange(false);
+    
+    try {
+      await updateRecurringPayment(payment.id, updatedData);
+      toast({
+        title: "Success",
+        description: `Recurring ${formData.type} updated successfully!`,
+      });
+      onOpenChange(false);
+    } catch (error) {
+       toast({
+        title: "Update Failed",
+        description: "Could not update the recurring payment. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const categories = formData.type === 'income' ? incomeCategories : expenseCategories;

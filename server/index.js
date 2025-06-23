@@ -584,6 +584,7 @@ app.put('/api/recurring-payments/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+    console.log(`[DEBUG] Updating recurring payment ${id} with:`, updates);
 
     // Get current recurring payment
     const currentResult = await pool.query('SELECT * FROM recurring_payments WHERE id = $1', [id]);
@@ -594,6 +595,7 @@ app.put('/api/recurring-payments/:id', async (req, res) => {
 
     // Merge current data with updates
     const newPayment = { ...currentPayment, ...updates };
+    console.log(`[DEBUG] Merged payment data for update:`, newPayment);
 
     const result = await pool.query(
       'UPDATE recurring_payments SET name = $1, amount = $2, frequency = $3, category = $4, type = $5, next_payment_date = $6, account_id = $7 WHERE id = $8 RETURNING *',
@@ -608,8 +610,10 @@ app.put('/api/recurring-payments/:id', async (req, res) => {
         id
       ]
     );
+    console.log(`[DEBUG] Update successful for recurring payment ${id}`);
     res.json(result.rows[0]);
   } catch (error) {
+    console.error(`[ERROR] Failed to update recurring payment ${id}:`, error);
     res.status(500).json({ error: error.message });
   }
 });

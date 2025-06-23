@@ -157,6 +157,7 @@ export const WealthDashboard = () => {
 
   // Payment handlers
   const handlePaymentPaid = (payment) => {
+    // Add transaction to the account, linking it to the recurring payment
     addTransaction({
       accountId: payment.accountId,
       amount: payment.amount,
@@ -164,18 +165,12 @@ export const WealthDashboard = () => {
       category: payment.category,
       date: new Date(),
       type: payment.type,
+      recurringPaymentId: payment.id,
     });
-    deleteRecurringPayment(payment.id);
+
+    // Update the next payment date instead of recreating the payment
     const nextPaymentDate = getNextPaymentDate(payment.frequency, payment.nextPaymentDate);
-    addRecurringPayment({
-      name: payment.name,
-      amount: payment.amount,
-      frequency: payment.frequency,
-      category: payment.category,
-      type: payment.type,
-      nextPaymentDate,
-      accountId: payment.accountId,
-    });
+    updateRecurringPayment(payment.id, { nextPaymentDate });
   };
   const handlePaymentSkipped = (payment) => {
     const nextPaymentDate = getNextPaymentDate(payment.frequency, payment.nextPaymentDate);
