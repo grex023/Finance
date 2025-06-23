@@ -13,6 +13,7 @@ import { fetchTrading212Data, API_BASE_URL } from '@/services/api';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { useIsMobile } from '../hooks/use-mobile';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 export const AccountsSection = () => {
   const { accounts, recurringPayments, addTransaction, deleteRecurringPayment, addRecurringPayment, updateAccount, refreshData, updateRecurringPayment } = useAccount();
@@ -287,11 +288,13 @@ export const AccountsSection = () => {
               <Card className="hover:shadow-lg transition-shadow duration-300 cursor-pointer">
                 <CardHeader className="pb-3">
                   <div className={`bg-gradient-to-r ${getAccountColor(account.type)} p-2 rounded-lg text-white relative w-10 h-10 flex items-center justify-center`}>
-                    {account.imageUrl ? (
-                      <img src={`${API_BASE_URL.replace('/api', '')}${account.imageUrl}`} alt="Account" className="w-10 h-10 object-cover rounded-lg" />
-                    ) : (
-                      getAccountIcon(account.type)
-                    )}
+                    <Avatar className="h-10 w-10">
+                      {account.imageUrl ? (
+                        <AvatarImage src={`${API_BASE_URL.replace('/api', '')}${account.imageUrl}`} alt="Account" className="h-full w-full object-cover" />
+                      ) : (
+                        <AvatarFallback>{getAccountIcon(account.type)}</AvatarFallback>
+                      )}
+                    </Avatar>
                   </div>
                   <div className="text-right flex-1 ml-3">
                     <CardTitle className="text-lg capitalize">{account.type}</CardTitle>
@@ -402,11 +405,13 @@ export const AccountsSection = () => {
               <Card className="hover:shadow-lg transition-shadow duration-300 cursor-pointer">
                 <CardHeader className="pb-3">
                   <div className={`bg-gradient-to-r ${getAccountColor(account.type)} p-2 rounded-lg text-white relative w-10 h-10 flex items-center justify-center`}>
-                    {account.imageUrl ? (
-                      <img src={`${API_BASE_URL.replace('/api', '')}${account.imageUrl}`} alt="Account" className="w-10 h-10 object-cover rounded-lg" />
-                    ) : (
-                      getAccountIcon(account.type)
-                    )}
+                    <Avatar className="h-10 w-10">
+                      {account.imageUrl ? (
+                        <AvatarImage src={`${API_BASE_URL.replace('/api', '')}${account.imageUrl}`} alt="Account" className="h-full w-full object-cover" />
+                      ) : (
+                        <AvatarFallback>{getAccountIcon(account.type)}</AvatarFallback>
+                      )}
+                    </Avatar>
                   </div>
                   <div className="text-right flex-1 ml-3">
                     <CardTitle className="text-lg capitalize">{account.type}</CardTitle>
