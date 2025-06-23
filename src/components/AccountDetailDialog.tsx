@@ -32,7 +32,9 @@ export const AccountDetailDialog = ({ open, onOpenChange, account }: AccountDeta
   // Get recurring payments for the next week for this account
   const nextWeek = new Date();
   nextWeek.setDate(nextWeek.getDate() + 7);
-  const upcomingRecurringPayments = recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= nextWeek);
+  const upcomingRecurringPayments = recurringPayments
+    .filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= nextWeek)
+    .sort((a, b) => new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime());
 
   const getNextPaymentDate = (frequency: string, currentDate: Date) => {
     const nextDate = new Date(currentDate);

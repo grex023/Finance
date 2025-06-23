@@ -186,7 +186,9 @@ export const WealthDashboard = () => {
   const today = new Date();
   const weekFromNow = new Date();
   weekFromNow.setDate(today.getDate() + 7);
-  const upcomingPayments = recurringPayments.filter(payment => new Date(payment.nextPaymentDate) <= weekFromNow);
+  const upcomingPayments = recurringPayments
+    .filter(payment => new Date(payment.nextPaymentDate) <= weekFromNow)
+    .sort((a, b) => new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime());
 
   return (
     <div className="space-y-8 relative pb-32">

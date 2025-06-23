@@ -310,7 +310,10 @@ export const AccountsSection = () => {
                 {recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).length > 0 && (
                   <div className="mt-2">
                     <h4 className="text-md font-semibold mb-1 pl-2">Upcoming Payments</h4>
-                    {recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).map(payment => (
+                    {recurringPayments
+                      .filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000))
+                      .sort((a, b) => new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime())
+                      .map(payment => (
                       <div key={payment.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-2">
                         <div className="flex justify-between items-center mb-1">
                           <div>
@@ -386,7 +389,10 @@ export const AccountsSection = () => {
                 {recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).length > 0 && (
                   <div className="mt-2">
                     <h4 className="text-md font-semibold mb-1 pl-2">Upcoming Payments</h4>
-                    {recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).map(payment => (
+                    {recurringPayments
+                      .filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000))
+                      .sort((a, b) => new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime())
+                      .map(payment => (
                       <div key={payment.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-2">
                         <div className="flex justify-between items-center mb-1">
                           <div>
