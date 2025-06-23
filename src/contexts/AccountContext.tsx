@@ -14,6 +14,7 @@ export interface Account {
   tradingResult?: number;
   createdAt: Date;
   order: number;
+  imageUrl?: string;
 }
 
 export interface Debt {
@@ -103,6 +104,7 @@ const convertApiAccount = (apiAccount: ApiAccount): Account => ({
   tradingResult: apiAccount.trading_result ? Number(apiAccount.trading_result) : undefined,
   createdAt: new Date(apiAccount.created_at),
   order: apiAccount.order ? Number(apiAccount.order) : 0,
+  imageUrl: apiAccount.image_url || undefined,
 });
 
 const convertApiDebt = (apiDebt: ApiDebt): Debt => ({

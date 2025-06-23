@@ -3,6 +3,9 @@ import cors from 'cors';
 import pkg from 'pg';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
+import path from 'path';
+import multer from 'multer';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -369,6 +372,53 @@ app.get('/api/accounts', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM accounts ORDER BY "order"');
     res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Ensure uploads/accounts directory exists
+const uploadsDir = path.join(process.cwd(), 'uploads', 'accounts');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Multer setup for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${req.params.id}${ext}`);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 1 * 1024 * 1024 }, // 1MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPEG and PNG files are allowed'));
+    }
+  }
+});
+
+// Serve uploads directory as static
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+// Add image_url column if not exists
+await pool.query('ALTER TABLE accounts ADD COLUMN IF NOT EXISTS image_url TEXT');
+
+// Upload account image endpoint
+app.post('/api/accounts/:id/image', upload.single('image'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const imageUrl = `/uploads/accounts/${req.file.filename}`;
+    await pool.query('UPDATE accounts SET image_url = $1 WHERE id = $2', [imageUrl, id]);
+    res.json({ image_url: imageUrl });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -13,6 +13,7 @@ export interface ApiAccount {
   trading_result?: number;
   created_at: string;
   order: number;
+  image_url?: string;
 }
 
 export interface ApiDebt {
