@@ -239,7 +239,7 @@ export const WealthDashboard = () => {
                     {Object.entries(wealthByType).map(([type, amount]) => (
                       <div key={type} className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">{getAccountTypeName(type)}</span>
-                        <span className="font-semibold text-green-600">£{amount.toFixed(2)}</span>
+                        <span className={`font-semibold ${amount < 0 ? 'text-red-600' : 'text-green-600'}`}>£{amount.toFixed(2)}</span>
                       </div>
                     ))}
                     {Object.keys(wealthByType).length === 0 && (
