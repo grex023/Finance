@@ -579,6 +579,7 @@ app.post('/api/recurring-payments', async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (error) {
+    console.error('[ERROR] Failed to create recurring payment:', error, req.body);
     res.status(500).json({ error: error.message });
   }
 });
