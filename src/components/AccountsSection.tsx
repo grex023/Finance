@@ -9,7 +9,7 @@ import { AccountDetailDialog } from './AccountDetailDialog';
 import { TransferDialog } from './TransferDialog';
 import { Account } from '@/contexts/AccountContext';
 import { toast } from '@/components/ui/use-toast';
-import { fetchTrading212Data } from '@/services/api';
+import { fetchTrading212Data, API_BASE_URL } from '@/services/api';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { useIsMobile } from '../hooks/use-mobile';
@@ -251,7 +251,7 @@ export const AccountsSection = () => {
     const formData = new FormData();
     formData.append('image', file);
     try {
-      const res = await fetch(`/api/accounts/${accountId}/image`, { method: 'POST', body: formData });
+      const res = await fetch(`${API_BASE_URL}/accounts/${accountId}/image`, { method: 'POST', body: formData });
       if (!res.ok) throw new Error('Failed to upload image');
       await refreshData();
       toast({ title: 'Success', description: 'Image uploaded!' });
@@ -286,45 +286,43 @@ export const AccountsSection = () => {
             <div key={account.id} className="min-w-[260px] max-w-xs flex-shrink-0" onClick={() => handleAccountClick(account)}>
               <Card className="hover:shadow-lg transition-shadow duration-300 cursor-pointer">
                 <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className={`bg-gradient-to-r ${getAccountColor(account.type)} p-2 rounded-lg text-white relative w-10 h-10 flex items-center justify-center`}>
-                      {account.imageUrl ? (
-                        <img src={account.imageUrl} alt="Account" className="w-10 h-10 object-cover rounded-lg" />
-                      ) : (
-                        getAccountIcon(account.type)
-                      )}
-                      <label className="absolute bottom-0 right-0 bg-white rounded-full p-1 cursor-pointer shadow" title="Upload Image" style={{ lineHeight: 0 }}>
-                        <input type="file" accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={e => {
-                          if (e.target.files && e.target.files[0]) handleImageUpload(account.id, e.target.files[0]);
-                        }} />
-                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="#333" strokeWidth="2" d="M12 16v-4m0 0V8m0 4h4m-4 0H8"/></svg>
-                      </label>
-                    </div>
-                    <div className="text-right flex-1 ml-3">
-                      <CardTitle className="text-lg capitalize">{account.type}</CardTitle>
-                      <p className="text-sm text-gray-500">{account.name}</p>
-                    </div>
-                    <div className="flex gap-1">
-                      {account.type === 'investment' && account.apiKey && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={e => { e.stopPropagation(); handleRefreshInvestment(account); }}
-                          className="p-1 h-8 w-8"
-                          title="Refresh balance from Trading 212"
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                      )}
+                  <div className={`bg-gradient-to-r ${getAccountColor(account.type)} p-2 rounded-lg text-white relative w-10 h-10 flex items-center justify-center`}>
+                    {account.imageUrl ? (
+                      <img src={account.imageUrl} alt="Account" className="w-10 h-10 object-cover rounded-lg" />
+                    ) : (
+                      getAccountIcon(account.type)
+                    )}
+                    <label className="absolute top-0 right-0 bg-white border border-gray-300 rounded-full p-0.5 cursor-pointer shadow flex items-center justify-center" title="Upload Image" style={{ lineHeight: 0, width: 22, height: 22 }}>
+                      <input type="file" accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={e => {
+                        if (e.target.files && e.target.files[0]) handleImageUpload(account.id, e.target.files[0]);
+                      }} />
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="#333" strokeWidth="2" d="M12 16v-4m0 0V8m0 4h4m-4 0H8"/><circle cx="12" cy="12" r="7" stroke="#333" strokeWidth="2" fill="none"/></svg>
+                    </label>
+                  </div>
+                  <div className="text-right flex-1 ml-3">
+                    <CardTitle className="text-lg capitalize">{account.type}</CardTitle>
+                    <p className="text-sm text-gray-500">{account.name}</p>
+                  </div>
+                  <div className="flex gap-1 flex-nowrap items-center">
+                    {account.type === 'investment' && account.apiKey && (
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={e => { e.stopPropagation(); handleEditAccount(account); }}
+                        onClick={e => { e.stopPropagation(); handleRefreshInvestment(account); }}
                         className="p-1 h-8 w-8"
+                        title="Refresh balance from Trading 212"
                       >
-                        <Edit className="h-4 w-4" />
+                        <RefreshCw className="h-4 w-4" />
                       </Button>
-                    </div>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={e => { e.stopPropagation(); handleEditAccount(account); }}
+                      className="p-1 h-8 w-8"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -415,18 +413,18 @@ export const AccountsSection = () => {
                     ) : (
                       getAccountIcon(account.type)
                     )}
-                    <label className="absolute bottom-0 right-0 bg-white rounded-full p-1 cursor-pointer shadow" title="Upload Image" style={{ lineHeight: 0 }}>
+                    <label className="absolute top-0 right-0 bg-white border border-gray-300 rounded-full p-0.5 cursor-pointer shadow flex items-center justify-center" title="Upload Image" style={{ lineHeight: 0, width: 22, height: 22 }}>
                       <input type="file" accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={e => {
                         if (e.target.files && e.target.files[0]) handleImageUpload(account.id, e.target.files[0]);
                       }} />
-                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="#333" strokeWidth="2" d="M12 16v-4m0 0V8m0 4h4m-4 0H8"/></svg>
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="#333" strokeWidth="2" d="M12 16v-4m0 0V8m0 4h4m-4 0H8"/><circle cx="12" cy="12" r="7" stroke="#333" strokeWidth="2" fill="none"/></svg>
                     </label>
                   </div>
                   <div className="text-right flex-1 ml-3">
                     <CardTitle className="text-lg capitalize">{account.type}</CardTitle>
                     <p className="text-sm text-gray-500">{account.name}</p>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 flex-nowrap items-center">
                     {account.type === 'investment' && account.apiKey && (
                       <Button
                         size="sm"
