@@ -308,7 +308,19 @@ export const AccountsSection = () => {
                           onBlur={async () => {
                             const newBalance = parseFloat(editingBalanceValue);
                             if (!isNaN(newBalance) && newBalance !== account.balance) {
-                              await updateAccount(account.id, { balance: newBalance });
+                              // Send all required fields
+                              await updateAccount(account.id, {
+                                name: account.name,
+                                type: account.type,
+                                balance: newBalance,
+                                interestRate: account.interestRate,
+                                apiKey: account.apiKey,
+                                frequency: account.frequency,
+                                resetDay: account.resetDay,
+                                pieId: account.pieId,
+                                tradingResult: account.tradingResult,
+                                order: account.order,
+                              });
                               await refreshData();
                             }
                             setEditingBalanceId(null);
@@ -317,7 +329,18 @@ export const AccountsSection = () => {
                             if (e.key === 'Enter') {
                               const newBalance = parseFloat(editingBalanceValue);
                               if (!isNaN(newBalance) && newBalance !== account.balance) {
-                                await updateAccount(account.id, { balance: newBalance });
+                                await updateAccount(account.id, {
+                                  name: account.name,
+                                  type: account.type,
+                                  balance: newBalance,
+                                  interestRate: account.interestRate,
+                                  apiKey: account.apiKey,
+                                  frequency: account.frequency,
+                                  resetDay: account.resetDay,
+                                  pieId: account.pieId,
+                                  tradingResult: account.tradingResult,
+                                  order: account.order,
+                                });
                                 await refreshData();
                               }
                               setEditingBalanceId(null);
@@ -398,7 +421,19 @@ export const AccountsSection = () => {
                           onBlur={async () => {
                             const newBalance = parseFloat(editingBalanceValue);
                             if (!isNaN(newBalance) && newBalance !== account.balance) {
-                              await updateAccount(account.id, { balance: newBalance });
+                              // Send all required fields
+                              await updateAccount(account.id, {
+                                name: account.name,
+                                type: account.type,
+                                balance: newBalance,
+                                interestRate: account.interestRate,
+                                apiKey: account.apiKey,
+                                frequency: account.frequency,
+                                resetDay: account.resetDay,
+                                pieId: account.pieId,
+                                tradingResult: account.tradingResult,
+                                order: account.order,
+                              });
                               await refreshData();
                             }
                             setEditingBalanceId(null);
@@ -407,7 +442,18 @@ export const AccountsSection = () => {
                             if (e.key === 'Enter') {
                               const newBalance = parseFloat(editingBalanceValue);
                               if (!isNaN(newBalance) && newBalance !== account.balance) {
-                                await updateAccount(account.id, { balance: newBalance });
+                                await updateAccount(account.id, {
+                                  name: account.name,
+                                  type: account.type,
+                                  balance: newBalance,
+                                  interestRate: account.interestRate,
+                                  apiKey: account.apiKey,
+                                  frequency: account.frequency,
+                                  resetDay: account.resetDay,
+                                  pieId: account.pieId,
+                                  tradingResult: account.tradingResult,
+                                  order: account.order,
+                                });
                                 await refreshData();
                               }
                               setEditingBalanceId(null);
