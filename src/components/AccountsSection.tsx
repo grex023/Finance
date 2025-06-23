@@ -24,6 +24,8 @@ export const AccountsSection = () => {
   const [showTransfer, setShowTransfer] = useState(false);
   const [projectedBalances, setProjectedBalances] = useState<Record<string, number>>({});
   const isMobile = useIsMobile();
+  const [editingBalanceId, setEditingBalanceId] = useState<string | null>(null);
+  const [editingBalanceValue, setEditingBalanceValue] = useState<string>('');
 
   // Calculate projected balances for all accounts
   useEffect(() => {
@@ -296,7 +298,42 @@ export const AccountsSection = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Balance</span>
-                      <span className="text-lg font-semibold">£{account.balance.toFixed(2)}</span>
+                      {editingBalanceId === account.id ? (
+                        <input
+                          type="number"
+                          className="border rounded px-2 py-1 w-24 text-right font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          value={editingBalanceValue}
+                          autoFocus
+                          onChange={e => setEditingBalanceValue(e.target.value)}
+                          onBlur={async () => {
+                            const newBalance = parseFloat(editingBalanceValue);
+                            if (!isNaN(newBalance) && newBalance !== account.balance) {
+                              await updateAccount(account.id, { balance: newBalance });
+                              await refreshData();
+                            }
+                            setEditingBalanceId(null);
+                          }}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              const newBalance = parseFloat(editingBalanceValue);
+                              if (!isNaN(newBalance) && newBalance !== account.balance) {
+                                await updateAccount(account.id, { balance: newBalance });
+                                await refreshData();
+                              }
+                              setEditingBalanceId(null);
+                            } else if (e.key === 'Escape') {
+                              setEditingBalanceId(null);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <span className="text-lg font-semibold flex items-center gap-2">
+                          £{account.balance.toFixed(2)}
+                          <Button size="sm" variant="ghost" className="p-1 h-6 w-6" onClick={e => { e.stopPropagation(); setEditingBalanceId(account.id); setEditingBalanceValue(account.balance.toString()); }} title="Edit Balance">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </span>
+                      )}
                     </div>
                     {account.type === 'current' && account.frequency && recurringPayments.length > 0 && (
                       <div className="flex justify-between items-center">
@@ -351,7 +388,42 @@ export const AccountsSection = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Balance</span>
-                      <span className="text-lg font-semibold">£{account.balance.toFixed(2)}</span>
+                      {editingBalanceId === account.id ? (
+                        <input
+                          type="number"
+                          className="border rounded px-2 py-1 w-24 text-right font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          value={editingBalanceValue}
+                          autoFocus
+                          onChange={e => setEditingBalanceValue(e.target.value)}
+                          onBlur={async () => {
+                            const newBalance = parseFloat(editingBalanceValue);
+                            if (!isNaN(newBalance) && newBalance !== account.balance) {
+                              await updateAccount(account.id, { balance: newBalance });
+                              await refreshData();
+                            }
+                            setEditingBalanceId(null);
+                          }}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              const newBalance = parseFloat(editingBalanceValue);
+                              if (!isNaN(newBalance) && newBalance !== account.balance) {
+                                await updateAccount(account.id, { balance: newBalance });
+                                await refreshData();
+                              }
+                              setEditingBalanceId(null);
+                            } else if (e.key === 'Escape') {
+                              setEditingBalanceId(null);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <span className="text-lg font-semibold flex items-center gap-2">
+                          £{account.balance.toFixed(2)}
+                          <Button size="sm" variant="ghost" className="p-1 h-6 w-6" onClick={e => { e.stopPropagation(); setEditingBalanceId(account.id); setEditingBalanceValue(account.balance.toString()); }} title="Edit Balance">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </span>
+                      )}
                     </div>
                     {account.type === 'current' && account.frequency && recurringPayments.length > 0 && (
                       <div className="flex justify-between items-center">
