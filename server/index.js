@@ -583,10 +583,30 @@ app.post('/api/recurring-payments', async (req, res) => {
 app.put('/api/recurring-payments/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, amount, frequency, category, type, nextPaymentDate, accountId } = req.body;
+    const updates = req.body;
+
+    // Get current recurring payment
+    const currentResult = await pool.query('SELECT * FROM recurring_payments WHERE id = $1', [id]);
+    if (currentResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Recurring payment not found' });
+    }
+    const currentPayment = currentResult.rows[0];
+
+    // Merge current data with updates
+    const newPayment = { ...currentPayment, ...updates };
+
     const result = await pool.query(
       'UPDATE recurring_payments SET name = $1, amount = $2, frequency = $3, category = $4, type = $5, next_payment_date = $6, account_id = $7 WHERE id = $8 RETURNING *',
-      [name, amount, frequency, category, type, nextPaymentDate, accountId, id]
+      [
+        newPayment.name,
+        newPayment.amount,
+        newPayment.frequency,
+        newPayment.category,
+        newPayment.type,
+        newPayment.next_payment_date,
+        newPayment.account_id,
+        id
+      ]
     );
     res.json(result.rows[0]);
   } catch (error) {
