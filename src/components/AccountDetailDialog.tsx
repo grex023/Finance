@@ -53,9 +53,9 @@ export const AccountDetailDialog = ({ open, onOpenChange, account }: AccountDeta
   };
 
   // Add Pay/Skip handlers (re-implement if not available as props)
-  const handlePaymentPaid = (payment: RecurringPayment) => {
+  const handlePaymentPaid = async (payment: RecurringPayment) => {
     // Add transaction to the account, linking it to the recurring payment
-    addTransaction({
+    await addTransaction({
       accountId: payment.accountId,
       amount: payment.amount,
       description: payment.name,
@@ -67,7 +67,8 @@ export const AccountDetailDialog = ({ open, onOpenChange, account }: AccountDeta
 
     // Update the next payment date instead of recreating the payment
     const nextPaymentDate = getNextPaymentDate(payment.frequency, payment.nextPaymentDate);
-    updateRecurringPayment(payment.id, { nextPaymentDate });
+    await updateRecurringPayment(payment.id, { nextPaymentDate });
+    await refreshData();
   };
   const handlePaymentSkipped = (payment) => {
     // Update the next payment date instead of recreating the payment

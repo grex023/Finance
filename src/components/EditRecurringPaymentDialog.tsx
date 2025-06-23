@@ -24,7 +24,7 @@ const incomeCategories = [
 ];
 
 export const EditRecurringPaymentDialog = ({ open, onOpenChange, payment }: EditRecurringPaymentDialogProps) => {
-  const { accounts, updateRecurringPayment } = useAccount();
+  const { accounts, updateRecurringPayment, refreshData } = useAccount();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -74,6 +74,7 @@ export const EditRecurringPaymentDialog = ({ open, onOpenChange, payment }: Edit
     
     try {
       await updateRecurringPayment(payment.id, updatedData);
+      await refreshData();
       toast({
         title: "Success",
         description: `Recurring ${formData.type} updated successfully!`,

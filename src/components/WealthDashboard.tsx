@@ -7,7 +7,7 @@ import FinanceChat from './FinanceChat';
 import { Button } from '@/components/ui/button';
 
 export const WealthDashboard = () => {
-  const { accounts, debts, transactions, recurringPayments, addTransaction, deleteRecurringPayment, addRecurringPayment, getTotalWealth, getTotalRetirement, getTotalDebt, getNetWorth, getTotalAvailableCredit, updateRecurringPayment } = useAccount();
+  const { accounts, debts, transactions, recurringPayments, addTransaction, deleteRecurringPayment, addRecurringPayment, getTotalWealth, getTotalRetirement, getTotalDebt, getNetWorth, getTotalAvailableCredit, updateRecurringPayment, refreshData } = useAccount();
 
   const totalWealth = getTotalWealth();
   const totalRetirement = getTotalRetirement();
@@ -156,9 +156,9 @@ export const WealthDashboard = () => {
   };
 
   // Payment handlers
-  const handlePaymentPaid = (payment) => {
+  const handlePaymentPaid = async (payment) => {
     // Add transaction to the account, linking it to the recurring payment
-    addTransaction({
+    await addTransaction({
       accountId: payment.accountId,
       amount: payment.amount,
       description: payment.name,
@@ -170,7 +170,8 @@ export const WealthDashboard = () => {
 
     // Update the next payment date instead of recreating the payment
     const nextPaymentDate = getNextPaymentDate(payment.frequency, payment.nextPaymentDate);
-    updateRecurringPayment(payment.id, { nextPaymentDate });
+    await updateRecurringPayment(payment.id, { nextPaymentDate });
+    await refreshData();
   };
   const handlePaymentSkipped = (payment) => {
     const nextPaymentDate = getNextPaymentDate(payment.frequency, payment.nextPaymentDate);
