@@ -484,6 +484,7 @@ app.get('/api/transactions', async (req, res) => {
 
 app.post('/api/transactions', async (req, res) => {
   try {
+    console.log('[DEBUG] Incoming transaction payload:', req.body);
     const { id, account_id, amount, description, category, date, type, recurring_payment_id } = req.body;
     
     const client = await pool.connect();
@@ -500,7 +501,7 @@ app.post('/api/transactions', async (req, res) => {
       [balanceChange, account_id]
     );
     
-    res.json(result.rows[0]);
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

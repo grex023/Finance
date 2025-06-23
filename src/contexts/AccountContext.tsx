@@ -345,7 +345,7 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
         category: transactionData.category,
         date: transactionData.date.toISOString().split('T')[0],
         type: transactionData.type,
-        recurring_payment_id: transactionData.recurringPaymentId,
+        recurring_payment_id: transactionData.recurringPaymentId || null,
       });
       
       const newTransaction = convertApiTransaction(apiTransaction);
@@ -426,7 +426,7 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
         frequency: paymentData.frequency,
         category: paymentData.category,
         type: paymentData.type,
-        next_payment_date: paymentData.nextPaymentDate?.toISOString().split('T')[0],
+        next_payment_date: paymentData.nextPaymentDate ? paymentData.nextPaymentDate.toISOString().split('T')[0] : undefined,
         account_id: paymentData.accountId,
       });
       setRecurringPayments(prev => prev.map(payment => 
