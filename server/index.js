@@ -483,11 +483,10 @@ app.get('/api/transactions', async (req, res) => {
 });
 
 app.post('/api/transactions', async (req, res) => {
+  const client = await pool.connect();
   try {
     console.log('[DEBUG] Incoming transaction payload:', req.body);
     const { id, account_id, amount, description, category, date, type, recurring_payment_id } = req.body;
-    
-    const client = await pool.connect();
     await client.query('BEGIN');
     // Add transaction
     await client.query(
@@ -500,10 +499,13 @@ app.post('/api/transactions', async (req, res) => {
       'UPDATE accounts SET balance = balance + $1 WHERE id = $2',
       [balanceChange, account_id]
     );
-    
+    await client.query('COMMIT');
     res.json({ success: true });
   } catch (error) {
+    await client.query('ROLLBACK');
     res.status(500).json({ error: error.message });
+  } finally {
+    client.release();
   }
 });
 
