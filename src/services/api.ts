@@ -383,8 +383,8 @@ class ApiService {
         frequency: payment.frequency,
         category: payment.category,
         type: payment.type,
-        nextPaymentDate: payment.next_payment_date,
-        accountId: payment.account_id,
+        next_payment_date: payment.next_payment_date,
+        account_id: payment.account_id,
       }),
     });
     if (!response.ok) throw new Error('Failed to create recurring payment');
@@ -410,8 +410,8 @@ class ApiService {
         frequency: payment.frequency,
         category: payment.category,
         type: payment.type,
-        nextPaymentDate: payment.next_payment_date,
-        accountId: payment.account_id,
+        next_payment_date: payment.next_payment_date,
+        account_id: payment.account_id,
       }),
     });
     if (!response.ok) throw new Error('Failed to update recurring payment');
