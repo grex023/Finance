@@ -292,12 +292,6 @@ export const AccountsSection = () => {
                     ) : (
                       getAccountIcon(account.type)
                     )}
-                    <label className="absolute top-0 right-0 bg-white border border-gray-300 rounded-full p-0.5 cursor-pointer shadow flex items-center justify-center" title="Upload Image" style={{ lineHeight: 0, width: 22, height: 22 }}>
-                      <input type="file" accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={e => {
-                        if (e.target.files && e.target.files[0]) handleImageUpload(account.id, e.target.files[0]);
-                      }} />
-                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="#333" strokeWidth="2" d="M12 16v-4m0 0V8m0 4h4m-4 0H8"/><circle cx="12" cy="12" r="7" stroke="#333" strokeWidth="2" fill="none"/></svg>
-                    </label>
                   </div>
                   <div className="text-right flex-1 ml-3">
                     <CardTitle className="text-lg capitalize">{account.type}</CardTitle>
@@ -413,12 +407,6 @@ export const AccountsSection = () => {
                     ) : (
                       getAccountIcon(account.type)
                     )}
-                    <label className="absolute top-0 right-0 bg-white border border-gray-300 rounded-full p-0.5 cursor-pointer shadow flex items-center justify-center" title="Upload Image" style={{ lineHeight: 0, width: 22, height: 22 }}>
-                      <input type="file" accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={e => {
-                        if (e.target.files && e.target.files[0]) handleImageUpload(account.id, e.target.files[0]);
-                      }} />
-                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="#333" strokeWidth="2" d="M12 16v-4m0 0V8m0 4h4m-4 0H8"/><circle cx="12" cy="12" r="7" stroke="#333" strokeWidth="2" fill="none"/></svg>
-                    </label>
                   </div>
                   <div className="text-right flex-1 ml-3">
                     <CardTitle className="text-lg capitalize">{account.type}</CardTitle>

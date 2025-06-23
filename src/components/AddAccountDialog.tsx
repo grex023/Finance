@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,8 @@ import { useAccount } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
 import { ProjectedBalanceCalculator } from './ProjectedBalanceCalculator';
 import { Trading212Dialog } from './Trading212Dialog';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { API_BASE_URL } from '@/services/api';
 
 interface AddAccountDialogProps {
   open: boolean;
@@ -16,7 +17,7 @@ interface AddAccountDialogProps {
 }
 
 export const AddAccountDialog = ({ open, onOpenChange }: AddAccountDialogProps) => {
-  const { addAccount } = useAccount();
+  const { addAccount, refreshData } = useAccount();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -31,39 +32,49 @@ export const AddAccountDialog = ({ open, onOpenChange }: AddAccountDialogProps) 
   });
   const [showProjectedBalance, setShowProjectedBalance] = useState(false);
   const [showTrading212Dialog, setShowTrading212Dialog] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleImageChange = (file: File) => {
+    setSelectedImage(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.name || !formData.balance) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
+      toast({ title: 'Error', description: 'Please fill in all required fields', variant: 'destructive' });
       return;
     }
-
     const accountData = {
       name: formData.name,
       type: formData.type,
       balance: parseFloat(formData.balance),
+      order: 0, // Default order if not set
       ...(formData.interestRate && { interestRate: parseFloat(formData.interestRate) }),
       ...(formData.apiKey && { apiKey: formData.apiKey }),
-      ...(formData.type === 'current' && { 
-        frequency: formData.frequency,
-        resetDay: parseInt(formData.resetDay)
-      }),
+      ...(formData.type === 'current' && { frequency: formData.frequency, resetDay: parseInt(formData.resetDay) }),
       ...(formData.pieId && { pieId: formData.pieId }),
       ...(formData.tradingResult !== null && { tradingResult: formData.tradingResult }),
     };
-
-    addAccount(accountData);
-    toast({
-      title: "Success",
-      description: "Account added successfully!",
-    });
-
+    const newAccount = await addAccount(accountData as any); // Cast to any to avoid type error if needed
+    if (selectedImage && newAccount && newAccount.id) {
+      setUploading(true);
+      const formDataImg = new FormData();
+      formDataImg.append('image', selectedImage);
+      try {
+        const res = await fetch(`${API_BASE_URL}/accounts/${newAccount.id}/image`, { method: 'POST', body: formDataImg });
+        if (!res.ok) throw new Error('Failed to upload image');
+        await refreshData();
+        toast({ title: 'Success', description: 'Image uploaded!' });
+      } catch (err) {
+        toast({ title: 'Error', description: 'Failed to upload image', variant: 'destructive' });
+      } finally {
+        setUploading(false);
+      }
+    }
+    toast({ title: 'Success', description: 'Account added successfully!' });
     resetForm();
     onOpenChange(false);
   };
@@ -81,6 +92,8 @@ export const AddAccountDialog = ({ open, onOpenChange }: AddAccountDialogProps) 
       tradingResult: null,
     });
     setShowProjectedBalance(false);
+    setSelectedImage(null);
+    setImagePreview(null);
   };
 
   const handleTypeChange = (value: any) => {
@@ -116,6 +129,24 @@ export const AddAccountDialog = ({ open, onOpenChange }: AddAccountDialogProps) 
             <DialogTitle>Add New Account</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex flex-col items-center gap-2">
+              <Avatar className="h-20 w-20">
+                {imagePreview ? (
+                  <AvatarImage src={imagePreview} alt="Preview" />
+                ) : (
+                  <AvatarFallback>{formData.name?.[0] || '?'}</AvatarFallback>
+                )}
+              </Avatar>
+              <Button asChild disabled={uploading} variant="outline" className="mt-2">
+                <label>
+                  Upload Image
+                  <input type="file" accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={e => {
+                    if (e.target.files && e.target.files[0]) handleImageChange(e.target.files[0]);
+                  }} />
+                </label>
+              </Button>
+              {uploading && <span className="text-xs text-gray-500">Uploading...</span>}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="name">Account Name *</Label>
               <Input
