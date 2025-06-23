@@ -11,6 +11,9 @@ COPY package*.json ./
 # Install dependencies with better error handling
 RUN npm ci --only=production && npm cache clean --force
 
+# Install dependencies (including multer)
+RUN npm install
+
 # Copy application code
 COPY . .
 
