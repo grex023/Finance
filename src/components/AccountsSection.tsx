@@ -306,30 +306,6 @@ export const AccountsSection = () => {
                     )}
                   </div>
                 </CardContent>
-                {/* Upcoming Payments for this account */}
-                {recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).length > 0 && (
-                  <div className="mt-2">
-                    <h4 className="text-md font-semibold mb-1 pl-2">Upcoming Payments</h4>
-                    {recurringPayments
-                      .filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000))
-                      .sort((a, b) => new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime())
-                      .map(payment => (
-                      <div key={payment.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-2">
-                        <div className="flex justify-between items-center mb-1">
-                          <div>
-                            <p className="font-medium">{payment.name}</p>
-                            <p className="text-xs text-gray-600">Due: {new Date(payment.nextPaymentDate).toLocaleDateString()}</p>
-                          </div>
-                          <span className="text-orange-600 font-semibold">£{payment.amount.toFixed(2)}</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex-1" onClick={e => { e.stopPropagation(); handlePaymentPaid(payment); }}>✓ Paid</Button>
-                          <Button size="sm" variant="outline" className="flex-1" onClick={e => { e.stopPropagation(); handlePaymentSkipped(payment); }}>✗ Skip</Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </Card>
             </div>
           ))}
@@ -385,34 +361,38 @@ export const AccountsSection = () => {
                     )}
                   </div>
                 </CardContent>
-                {/* Upcoming Payments for this account */}
-                {recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000)).length > 0 && (
-                  <div className="mt-2">
-                    <h4 className="text-md font-semibold mb-1 pl-2">Upcoming Payments</h4>
-                    {recurringPayments
-                      .filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= new Date(Date.now() + 7*24*60*60*1000))
-                      .sort((a, b) => new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime())
-                      .map(payment => (
-                      <div key={payment.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-2">
-                        <div className="flex justify-between items-center mb-1">
-                          <div>
-                            <p className="font-medium">{payment.name}</p>
-                            <p className="text-xs text-gray-600">Due: {new Date(payment.nextPaymentDate).toLocaleDateString()}</p>
-                          </div>
-                          <span className="text-orange-600 font-semibold">£{payment.amount.toFixed(2)}</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex-1" onClick={e => { e.stopPropagation(); handlePaymentPaid(payment); }}>✓ Paid</Button>
-                          <Button size="sm" variant="outline" className="flex-1" onClick={e => { e.stopPropagation(); handlePaymentSkipped(payment); }}>✗ Skip</Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </Card>
             </div>
           ))}
         </div>
+      )}
+
+      {/* After the accounts grid/carousel, add a single consolidated Upcoming Payments card */}
+      {upcomingPayments.length > 0 && (
+        <Card className="max-w-2xl mx-auto mt-6">
+          <CardHeader>
+            <CardTitle>Upcoming Payments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {upcomingPayments
+                .sort((a, b) => new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime())
+                .map(payment => (
+                  <div key={payment.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{payment.name}</p>
+                      <p className="text-xs text-gray-600">Due: {new Date(payment.nextPaymentDate).toLocaleDateString()} • {getAccountName(payment.accountId)}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-orange-600 font-semibold mr-2">£{payment.amount.toFixed(2)}</span>
+                      <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={e => { e.stopPropagation(); handlePaymentPaid(payment); }}>✓ Paid</Button>
+                      <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); handlePaymentSkipped(payment); }}>✗ Skip</Button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <AddAccountDialog open={showAddAccount} onOpenChange={setShowAddAccount} />
