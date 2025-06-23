@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiService, ApiAccount, ApiDebt, ApiTransaction, ApiRecurringPayment, ApiBudget, fetchTrading212Data } from '@/services/api';
+import { apiService, ApiAccount, ApiDebt, ApiTransaction, ApiRecurringPayment, fetchTrading212Data } from '@/services/api';
 
 export interface Account {
   id: string;
@@ -35,6 +35,7 @@ export interface Transaction {
   category: string;
   date: Date;
   type: 'income' | 'expense' | 'transfer';
+  recurringPaymentId?: string;
 }
 
 export interface RecurringPayment {
@@ -62,7 +63,8 @@ interface AccountContextType {
   updateDebt: (id: string, debt: Partial<Debt>) => Promise<void>;
   deleteDebt: (id: string) => Promise<void>;
   payDebt: (debtId: string, accountId: string, amount: number) => Promise<void>;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'> & { date: Date, recurringPaymentId?: string }) => Promise<void>;
+  deleteTransaction: (transactionId: string) => Promise<void>;
   addRecurringPayment: (payment: Omit<RecurringPayment, 'id'>) => Promise<void>;
   updateRecurringPayment: (id: string, payment: Partial<RecurringPayment>) => Promise<void>;
   deleteRecurringPayment: (id: string) => Promise<void>;
@@ -122,6 +124,7 @@ const convertApiTransaction = (apiTransaction: ApiTransaction): Transaction => (
   category: apiTransaction.category,
   date: new Date(apiTransaction.date),
   type: apiTransaction.type as Transaction['type'],
+  recurringPaymentId: apiTransaction.recurring_payment_id || undefined,
 });
 
 const convertApiRecurringPayment = (apiPayment: ApiRecurringPayment): RecurringPayment => ({
@@ -342,40 +345,30 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
         category: transactionData.category,
         date: transactionData.date.toISOString().split('T')[0],
         type: transactionData.type,
+        recurring_payment_id: transactionData.recurringPaymentId,
       });
       
       const newTransaction = convertApiTransaction(apiTransaction);
       setTransactions(prev => [...prev, newTransaction]);
       
-      // Check if this transaction is for a Trading 212 account and refresh its balance
-      const account = accounts.find(acc => acc.id === transactionData.accountId);
-      if (account?.type === 'investment' && account.apiKey && account.pieId) {
-        try {
-          console.log('🔄 Auto-refreshing Trading 212 balance for account:', account.name);
-          const tradingData = await fetchTrading212Data(account.apiKey, account.pieId);
-          
-          // Extract the updated balance from Trading 212 response
-          const updatedBalance = tradingData.instruments?.[0]?.result?.priceAvgValue || tradingData.result?.value || account.balance;
-          const updatedResult = tradingData.instruments?.[0]?.result?.priceAvgResult || tradingData.result?.result || account.tradingResult;
-          
-          // Update the account with fresh Trading 212 data
-          await updateAccount(account.id, {
-            balance: updatedBalance,
-            tradingResult: updatedResult,
-          });
-          
-          console.log('✅ Trading 212 balance refreshed successfully');
-        } catch (error) {
-          console.error('❌ Failed to auto-refresh Trading 212 balance:', error);
-          // Don't throw here - we still want the transaction to be added even if Trading 212 refresh fails
-        }
-      } else {
-        // For non-Trading 212 accounts, just refresh from database
-        const updatedAccounts = await apiService.getAccounts();
-        setAccounts(updatedAccounts.map(convertApiAccount));
-      }
+      // Refresh data to get updated account balances
+      await refreshData();
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add transaction');
+      throw err;
+    }
+  };
+
+  const deleteTransaction = async (transactionId: string) => {
+    try {
+      await apiService.deleteTransaction(transactionId);
+      // Optimistically remove the transaction from the UI
+      setTransactions(prev => prev.filter(t => t.id !== transactionId));
+      // Refresh all data to ensure consistency
+      await refreshData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to undo transaction');
       throw err;
     }
   };
@@ -553,6 +546,7 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
       deleteDebt,
       payDebt,
       addTransaction,
+      deleteTransaction,
       addRecurringPayment,
       updateRecurringPayment,
       deleteRecurringPayment,

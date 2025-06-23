@@ -34,6 +34,7 @@ export interface ApiTransaction {
   category: string;
   date: string;
   type: string;
+  recurring_payment_id?: string;
 }
 
 export interface ApiRecurringPayment {
@@ -329,27 +330,29 @@ class ApiService {
     return response.json();
   }
 
-  async createTransaction(transaction: ApiTransaction): Promise<ApiTransaction> {
+  async createTransaction(transaction: Omit<ApiTransaction, 'created_at'>): Promise<ApiTransaction> {
     if (this.useOfflineMode) {
       console.log('📝 Mock transaction created:', transaction);
-      return transaction;
+      return { ...transaction, id: Math.random().toString(), date: new Date().toISOString() };
     }
-
     const response = await fetch(`${API_BASE_URL}/transactions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: transaction.id,
-        accountId: transaction.account_id,
-        amount: transaction.amount,
-        description: transaction.description,
-        category: transaction.category,
-        date: transaction.date,
-        type: transaction.type,
-      }),
+      body: JSON.stringify(transaction),
     });
     if (!response.ok) throw new Error('Failed to create transaction');
     return response.json();
+  }
+
+  async deleteTransaction(id: string): Promise<void> {
+    if (this.useOfflineMode) {
+      console.log('📝 Mock transaction deleted:', id);
+      return;
+    }
+    const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete transaction');
   }
 
   // Recurring Payments

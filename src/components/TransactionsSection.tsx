@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Plus, ArrowUpDown, Calendar, ChevronDown } from 'lucide-react';
+import { Plus, ArrowUpDown, Calendar, ChevronDown, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +10,7 @@ import { useAccount } from '@/contexts/AccountContext';
 import { AddTransactionDialog } from './AddTransactionDialog';
 
 export const TransactionsSection = () => {
-  const { transactions, accounts } = useAccount();
+  const { transactions, accounts, deleteTransaction } = useAccount();
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [visibleCount, setVisibleCount] = useState(10);
@@ -135,12 +134,21 @@ export const TransactionsSection = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex items-center gap-2">
                       <p className={`font-semibold ${
                         transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {transaction.type === 'income' ? '+' : '-'}£{transaction.amount.toFixed(2)}
                       </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-500 hover:text-blue-600 p-1 h-8 w-8"
+                        onClick={() => deleteTransaction(transaction.id)}
+                        title="Undo Transaction"
+                      >
+                        <Undo2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 ))}

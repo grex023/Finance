@@ -15,7 +15,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { useIsMobile } from '../hooks/use-mobile';
 
 export const AccountsSection = () => {
-  const { accounts, recurringPayments, addTransaction, deleteRecurringPayment, addRecurringPayment, updateAccount, refreshData } = useAccount();
+  const { accounts, recurringPayments, addTransaction, deleteRecurringPayment, addRecurringPayment, updateAccount, refreshData, updateRecurringPayment } = useAccount();
   const [showAddAccount, setShowAddAccount] = useState(false);
   const [showEditAccount, setShowEditAccount] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
@@ -154,47 +154,26 @@ export const AccountsSection = () => {
   };
 
   const handlePaymentPaid = (payment: any) => {
-    // Add transaction to the account with correct type
+    // Add transaction to the account, linking it to the recurring payment
     addTransaction({
       accountId: payment.accountId,
       amount: payment.amount,
       description: payment.name,
       category: payment.category,
       date: new Date(),
-      type: payment.type, // Use the payment's type: 'income' or 'expense'
-    });
-
-    // Remove the current payment
-    deleteRecurringPayment(payment.id);
-
-    // Create the next payment
-    const nextPaymentDate = getNextPaymentDate(payment.frequency, payment.nextPaymentDate);
-    addRecurringPayment({
-      name: payment.name,
-      amount: payment.amount,
-      frequency: payment.frequency,
-      category: payment.category,
       type: payment.type,
-      nextPaymentDate,
-      accountId: payment.accountId,
+      recurringPaymentId: payment.id,
     });
+
+    // Update the next payment date instead of recreating the payment
+    const nextPaymentDate = getNextPaymentDate(payment.frequency, payment.nextPaymentDate);
+    updateRecurringPayment(payment.id, { nextPaymentDate });
   };
 
   const handlePaymentSkipped = (payment: any) => {
-    // Remove the current payment
-    deleteRecurringPayment(payment.id);
-
-    // Create the next payment
+    // Update the next payment date instead of recreating the payment
     const nextPaymentDate = getNextPaymentDate(payment.frequency, payment.nextPaymentDate);
-    addRecurringPayment({
-      name: payment.name,
-      amount: payment.amount,
-      frequency: payment.frequency,
-      category: payment.category,
-      type: payment.type,
-      nextPaymentDate,
-      accountId: payment.accountId,
-    });
+    updateRecurringPayment(payment.id, { nextPaymentDate });
   };
 
   const handleEditAccount = (account: Account) => {

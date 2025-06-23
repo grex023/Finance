@@ -164,9 +164,19 @@ async function initializeTables() {
         description TEXT NOT NULL,
         category VARCHAR(100) NOT NULL,
         date DATE NOT NULL,
-        type VARCHAR(20) NOT NULL
+        type VARCHAR(20) NOT NULL,
+        recurring_payment_id VARCHAR(50) REFERENCES recurring_payments(id) ON DELETE SET NULL
       )
     `);
+
+    // For existing databases, add the column if it doesn't exist
+    try {
+      await pool.query('ALTER TABLE transactions ADD COLUMN recurring_payment_id VARCHAR(50) REFERENCES recurring_payments(id) ON DELETE SET NULL');
+    } catch (e) {
+      if (e.code !== '42701') { // 42701 is duplicate column
+        throw e;
+      }
+    }
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS recurring_payments (
@@ -474,24 +484,76 @@ app.get('/api/transactions', async (req, res) => {
 
 app.post('/api/transactions', async (req, res) => {
   try {
-    const { id, accountId, amount, description, category, date, type } = req.body;
+    const { id, account_id, amount, description, category, date, type, recurring_payment_id } = req.body;
     
-    // Insert transaction
-    const result = await pool.query(
-      'INSERT INTO transactions (id, account_id, amount, description, category, date, type) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [id, accountId, amount, description, category, date, type]
+    const client = await pool.connect();
+    await client.query('BEGIN');
+    // Add transaction
+    await client.query(
+      'INSERT INTO transactions (id, account_id, amount, description, category, date, type, recurring_payment_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+      [id, account_id, amount, description, category, date, type, recurring_payment_id]
     );
-    
     // Update account balance
     const balanceChange = type === 'income' ? amount : -amount;
-    await pool.query(
+    await client.query(
       'UPDATE accounts SET balance = balance + $1 WHERE id = $2',
-      [balanceChange, accountId]
+      [balanceChange, account_id]
     );
     
     res.json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete a transaction (Undo)
+app.delete('/api/transactions/:id', async (req, res) => {
+  const { id } = req.params;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Get the transaction to undo
+    const txResult = await client.query('SELECT * FROM transactions WHERE id = $1', [id]);
+    if (txResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+    const tx = txResult.rows[0];
+
+    // Reverse the balance change on the account
+    if (tx.type === 'income') {
+      await client.query('UPDATE accounts SET balance = balance - $1 WHERE id = $2', [tx.amount, tx.account_id]);
+    } else if (tx.type === 'expense') {
+      await client.query('UPDATE accounts SET balance = balance + $1 WHERE id = $2', [tx.amount, tx.account_id]);
+    }
+    
+    // If it was from a recurring payment, reset the payment's date
+    if (tx.recurring_payment_id) {
+      const rpResult = await client.query('SELECT * FROM recurring_payments WHERE id = $1', [tx.recurring_payment_id]);
+      if (rpResult.rows.length > 0) {
+        const rp = rpResult.rows[0];
+        let previousDate = new Date(rp.next_payment_date);
+        
+        // Calculate the previous payment date
+        if (rp.frequency === 'weekly') previousDate.setDate(previousDate.getDate() - 7);
+        if (rp.frequency === 'monthly') previousDate.setMonth(previousDate.getMonth() - 1);
+        if (rp.frequency === 'yearly') previousDate.setFullYear(previousDate.getFullYear() - 1);
+
+        await client.query('UPDATE recurring_payments SET next_payment_date = $1 WHERE id = $2', [previousDate.toISOString().split('T')[0], rp.id]);
+      }
+    }
+    
+    // Delete the transaction
+    await client.query('DELETE FROM transactions WHERE id = $1', [id]);
+
+    await client.query('COMMIT');
+    res.status(204).send();
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
   }
 });
 

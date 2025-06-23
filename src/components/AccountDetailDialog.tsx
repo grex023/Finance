@@ -17,7 +17,7 @@ interface AccountDetailDialogProps {
 }
 
 export const AccountDetailDialog = ({ open, onOpenChange, account }: AccountDetailDialogProps) => {
-  const { transactions, recurringPayments, updateAccount, deleteAccount, refreshData, addTransaction, deleteRecurringPayment, addRecurringPayment } = useAccount();
+  const { transactions, recurringPayments, updateAccount, deleteAccount, refreshData, addTransaction, deleteRecurringPayment, addRecurringPayment, updateRecurringPayment } = useAccount();
   const { toast } = useToast();
   const projectedBalance = useProjectedBalance(account);
 
@@ -33,6 +33,22 @@ export const AccountDetailDialog = ({ open, onOpenChange, account }: AccountDeta
   const nextWeek = new Date();
   nextWeek.setDate(nextWeek.getDate() + 7);
   const upcomingRecurringPayments = recurringPayments.filter(payment => payment.accountId === account.id && new Date(payment.nextPaymentDate) <= nextWeek);
+
+  const getNextPaymentDate = (frequency: string, currentDate: Date) => {
+    const nextDate = new Date(currentDate);
+    switch (frequency) {
+      case 'weekly':
+        nextDate.setDate(nextDate.getDate() + 7);
+        break;
+      case 'monthly':
+        nextDate.setMonth(nextDate.getMonth() + 1);
+        break;
+      case 'yearly':
+        nextDate.setFullYear(nextDate.getFullYear() + 1);
+        break;
+    }
+    return nextDate;
+  };
 
   // Add Pay/Skip handlers (re-implement if not available as props)
   const handlePaymentPaid = (payment) => {
@@ -53,13 +69,9 @@ export const AccountDetailDialog = ({ open, onOpenChange, account }: AccountDeta
     addRecurringPayment({ ...payment, nextPaymentDate });
   };
   const handlePaymentSkipped = (payment) => {
-    deleteRecurringPayment(payment.id);
-    // Create the next payment
-    const nextPaymentDate = new Date(payment.nextPaymentDate);
-    if (payment.frequency === 'weekly') nextPaymentDate.setDate(nextPaymentDate.getDate() + 7);
-    if (payment.frequency === 'monthly') nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
-    if (payment.frequency === 'yearly') nextPaymentDate.setFullYear(nextPaymentDate.getFullYear() + 1);
-    addRecurringPayment({ ...payment, nextPaymentDate });
+    // Update the next payment date instead of recreating the payment
+    const nextPaymentDate = getNextPaymentDate(payment.frequency, payment.nextPaymentDate);
+    updateRecurringPayment(payment.id, { nextPaymentDate });
   };
 
   const getTransactionTypeColor = (type: string) => {

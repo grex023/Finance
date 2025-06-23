@@ -7,7 +7,7 @@ import FinanceChat from './FinanceChat';
 import { Button } from '@/components/ui/button';
 
 export const WealthDashboard = () => {
-  const { accounts, debts, transactions, recurringPayments, addTransaction, deleteRecurringPayment, addRecurringPayment, getTotalWealth, getTotalRetirement, getTotalDebt, getNetWorth, getTotalAvailableCredit } = useAccount();
+  const { accounts, debts, transactions, recurringPayments, addTransaction, deleteRecurringPayment, addRecurringPayment, getTotalWealth, getTotalRetirement, getTotalDebt, getNetWorth, getTotalAvailableCredit, updateRecurringPayment } = useAccount();
 
   const totalWealth = getTotalWealth();
   const totalRetirement = getTotalRetirement();
@@ -178,17 +178,8 @@ export const WealthDashboard = () => {
     });
   };
   const handlePaymentSkipped = (payment) => {
-    deleteRecurringPayment(payment.id);
     const nextPaymentDate = getNextPaymentDate(payment.frequency, payment.nextPaymentDate);
-    addRecurringPayment({
-      name: payment.name,
-      amount: payment.amount,
-      frequency: payment.frequency,
-      category: payment.category,
-      type: payment.type,
-      nextPaymentDate,
-      accountId: payment.accountId,
-    });
+    updateRecurringPayment(payment.id, { nextPaymentDate });
   };
 
   // Get upcoming payments (next 7 days)
