@@ -572,10 +572,10 @@ app.get('/api/recurring-payments', async (req, res) => {
 
 app.post('/api/recurring-payments', async (req, res) => {
   try {
-    const { id, name, amount, frequency, category, type, nextPaymentDate, accountId } = req.body;
+    const { id, name, amount, frequency, category, type, next_payment_date, account_id } = req.body;
     const result = await pool.query(
       'INSERT INTO recurring_payments (id, name, amount, frequency, category, type, next_payment_date, account_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [id, name, amount, frequency, category, type, nextPaymentDate, accountId]
+      [id, name, amount, frequency, category, type, next_payment_date, account_id]
     );
     res.json(result.rows[0]);
   } catch (error) {
