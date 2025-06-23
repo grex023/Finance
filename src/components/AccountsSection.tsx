@@ -288,7 +288,7 @@ export const AccountsSection = () => {
                 <CardHeader className="pb-3">
                   <div className={`bg-gradient-to-r ${getAccountColor(account.type)} p-2 rounded-lg text-white relative w-10 h-10 flex items-center justify-center`}>
                     {account.imageUrl ? (
-                      <img src={account.imageUrl} alt="Account" className="w-10 h-10 object-cover rounded-lg" />
+                      <img src={`${API_BASE_URL.replace('/api', '')}${account.imageUrl}`} alt="Account" className="w-10 h-10 object-cover rounded-lg" />
                     ) : (
                       getAccountIcon(account.type)
                     )}
@@ -409,7 +409,7 @@ export const AccountsSection = () => {
                 <CardHeader className="pb-3">
                   <div className={`bg-gradient-to-r ${getAccountColor(account.type)} p-2 rounded-lg text-white relative w-10 h-10 flex items-center justify-center`}>
                     {account.imageUrl ? (
-                      <img src={account.imageUrl} alt="Account" className="w-10 h-10 object-cover rounded-lg" />
+                      <img src={`${API_BASE_URL.replace('/api', '')}${account.imageUrl}`} alt="Account" className="w-10 h-10 object-cover rounded-lg" />
                     ) : (
                       getAccountIcon(account.type)
                     )}
